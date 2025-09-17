@@ -5,7 +5,7 @@ import { Button } from "primereact/button";
 import { Tag } from "primereact/tag";
 
 export default function NotAuth() {
-  const primaryColor = "#66030D"; // color primario consistente
+  const primaryColor = "#48595B"; // color primario consistente
 
   return (
     <div

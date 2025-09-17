@@ -5,7 +5,7 @@ import { Button } from "primereact/button";
 import { Tag } from "primereact/tag";
 
 export default function NotFound() {
-  const primaryColor = "#66030D";
+  const primaryColor = "#48595B";
 
   return (
     <div
