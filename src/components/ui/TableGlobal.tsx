@@ -45,7 +45,7 @@ export default function Table<T extends { id?: string | number }>({
             const id = record.id || index;
             const isSelected = selectedRowKeys?.includes(id);
 
-            return (
+             return (
               <tr
                 key={id}
                 className={`${
@@ -63,10 +63,12 @@ export default function Table<T extends { id?: string | number }>({
                 )}
                 {columns.map((col) => (
                   <td
-                    key={col.key}
+                    key={col.key as string}
                     className="p-2 whitespace-nowrap border-b border-gray-200"
                   >
-                    {col.render ? col.render(record) : (record as any)[col.key]}
+                    {col.render
+                      ? col.render(record)
+                      : (record[col.key as keyof T] as React.ReactNode)}
                   </td>
                 ))}
               </tr>
