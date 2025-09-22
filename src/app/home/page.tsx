@@ -2,7 +2,7 @@
 import { Card } from "primereact/card";
 import { Button } from "primereact/button";
 import { Tag } from "primereact/tag";
-import { PiFolderBold, PiCheckCircleBold, PiUsersThreeBold } from "react-icons/pi";
+import { PiFolderBold, PiCheckCircleBold, } from "react-icons/pi";
 import { useRouter } from "next/navigation"; // Importamos useRouter
 
 export default function Dashboard() {

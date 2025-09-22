@@ -105,8 +105,8 @@ export default function IncidenciasPage() {
       <Card className="shadow-md">
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-xl font-bold">Listado de Incidencias</h1>
-          <Link href="/">
-            <Button label="Volver al inicio" icon="pi pi-home" />
+          <Link href="/home">
+            <Button label="Volver al inicio" icon="pi pi-" />
           </Link>
         </div>
 
@@ -145,12 +145,12 @@ export default function IncidenciasPage() {
     
           <Column field="title" header="Título" />
           <Column field="description" header="Descripción" />
-          <Column field="status" header="Estado" body={statusTemplate} />
+          <Column style={{width:"120px"}}field="status" header="Estado" body={statusTemplate} />
           <Column field="priority" header="Prioridad" body={priorityTemplate} />
           <Column field="project" header="Proyecto" />
-          <Column field="reporter" header="Reportado por" />
-          <Column field="assignee" header="Asignado a" />
-          <Column  style={{width:"120px"}} field="created_at" header="Creado" />
+          <Column style={{width:"120px"}} field="reporter" header="Reportado por" />
+          <Column style={{width:"120px"}} field="assignee" header="Asignado a" />
+          <Column style={{width:"120px"}} field="created_at" header="Creado" />
           <Column field="updated_at" header="Actualizado" />
         </DataTable>
       </Card>
