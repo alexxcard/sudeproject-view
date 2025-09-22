@@ -143,7 +143,7 @@ export default function IncidenciasPage() {
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen p-6">
+    <div className="bg-[#f0f4f8] min-h-screen p-6">
       {/* Listado */}
       <Card className="shadow-md mb-4">
         <div className="flex justify-between items-center mb-4">
@@ -194,17 +194,43 @@ export default function IncidenciasPage() {
           responsiveLayout="scroll"
           size="small"
         >
-          
           <Column field="title" header="Título" />
           <Column field="description" header="Descripción" />
-          <Column style={{ width: "120px" }} field="status" header="Estado" body={statusTemplate} />
+          <Column
+            style={{ width: "120px" }}
+            field="status"
+            header="Estado"
+            body={statusTemplate}
+          />
           <Column field="priority" header="Prioridad" body={priorityTemplate} />
           <Column field="project" header="Proyecto" />
-          <Column style={{ width: "120px" }} field="reporter" header="Reportado por" />
-          <Column style={{ width: "120px" }} field="assignee" header="Asignado a" />
-          <Column style={{ width: "120px" }} field="created_at" header="Creado" />
+          <Column
+            style={{ width: "120px" }}
+            field="reporter"
+            header="Reportado por"
+          />
+          <Column
+            style={{ width: "120px" }}
+            field="assignee"
+            header="Asignado a"
+          />
+          <Column
+            style={{ width: "120px" }}
+            field="created_at"
+            header="Creado"
+          />
           <Column field="updated_at" header="Actualizado" />
-          <Column header="eliminar"body={(rowData) => ( <Button label=""  icon="pi pi-trash" className="p-button-danger p-button-sm" onClick={() => deleteIncidencia(rowData.id)} /> )} />
+          <Column
+            header="eliminar"
+            body={(rowData) => (
+              <Button
+                label=""
+                icon="pi pi-trash"
+                className="p-button-danger p-button-sm"
+                onClick={() => deleteIncidencia(rowData.id)}
+              />
+            )}
+          />
         </DataTable>
       </Card>
 
