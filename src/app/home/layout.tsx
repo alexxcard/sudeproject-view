@@ -1,4 +1,4 @@
-import "../globals.css";
+"use client";
 
 export default function HomeLayout({
   children,
@@ -6,10 +6,8 @@ export default function HomeLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es">
-      <body>
-        <div className="h-screen overflow-hidden">{children}</div>
-      </body>
-    </html>
+    <div className="h-screen overflow-hidden">
+      {children}
+    </div>
   );
 }

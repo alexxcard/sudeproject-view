@@ -1,13 +1,13 @@
-export default function RootLayout({
+"use client";
+
+export default function LoginLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es">
-      <body>
-        <div className="h-screen overflow-hidden">{children}</div>
-      </body>
-    </html>
+    <div className="h-screen flex items-center justify-center bg-gray-100">
+      {children}
+    </div>
   );
 }

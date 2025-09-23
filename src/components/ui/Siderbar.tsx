@@ -2,9 +2,10 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import Image from "next/image";
+
 
 const menuItems = [
+  { key: "inicio", label: "home", href: "/home" },
   { key: "incidencias", label: "Incidencias", href: "/incidencias" },
   { key: "proyectos", label: "Proyectos", href: "/proyectos" },
   { key: "sprints", label: "Sprints", href: "/sprints" },
