@@ -49,7 +49,7 @@ export default function Profile({ session, name }: ProfileProps) {
           {name?.[0]?.toUpperCase() || "U"}
         </div>
         <div className="text-sm text-gray-600 text-center">
-          {session && `Hola, ${name}`}
+          
         </div>
       </div>
 

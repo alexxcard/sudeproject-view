@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
 
 const menuItems = [
   { key: "incidencias", label: "Incidencias", href: "/incidencias" },
@@ -21,10 +22,8 @@ export default function Sidebar() {
         collapsed ? "w-16" : "w-56"
       }`}
     >
-      {/* LOGO */}
-      <div className="flex items-center justify-center h-16 border-b">
-        <span className="font-bold text-lg text-gray-800">Logo</span>
-      </div>
+ 
+   
 
       {/* BOTÓN TOGGLE */}
       <div className="flex justify-end p-2">
