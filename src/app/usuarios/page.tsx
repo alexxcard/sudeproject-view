@@ -1,128 +1,96 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Card } from "primereact/card";
-import { InputText } from "primereact/inputtext";
-import { Password } from "primereact/password";
+import { DataTable } from "primereact/datatable";
+import { Column } from "primereact/column";
 import { Button } from "primereact/button";
-import { Toast } from "primereact/toast";
-import { useRouter } from "next/navigation";
+import { Tag } from "primereact/tag";
+import { Dropdown } from "primereact/dropdown";
+import { Usuario } from "@/interface";
+import UsuarioForm from "@/components/features/UserForm";
+import { NewUsuario } from "@/types";
 
-interface RegisterFormValues {
-  nombre: string;
-  apellido: string;
-  correo: string;
-  password: string;
-}
 
-export default function RegisterContainer() {
-  const [loading, setLoading] = useState(false);
-  const [values, setValues] = useState<RegisterFormValues>({
-    nombre: "",
-    apellido: "",
-    correo: "",
-    password: "",
-  });
+const usuariosMock: Usuario[] = [
+  { id: "u1", nombre: "Juan Pérez", correo: "juan@example.com", rol: "Admin", estado: "Activo", created_at: "2025-09-01", updated_at: "2025-09-01" },
+  { id: "u2", nombre: "María Gómez", correo: "maria@example.com", rol: "Editor", estado: "Inactivo", created_at: "2025-09-05", updated_at: "2025-09-05" },
+  { id: "u3", nombre: "Pedro Torres", correo: "pedro@example.com", rol: "Viewer", estado: "Activo", created_at: "2025-09-07", updated_at: "2025-09-07" },
+];
 
-  const toast = useRef<Toast>(null);
-  const router = useRouter();
-  const primaryColor = "#48595B";
+export default function UsuariosPage() {
+  const [usuarios, setUsuarios] = useState(usuariosMock);
+  const [estadoFilter, setEstadoFilter] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
 
-  const inputStyle = {
-    width: "250px",
-    height: "36px",
-    borderColor: primaryColor,
-    borderRadius: "6px",
+  const filteredUsuarios = usuarios.filter(
+    (u) => !estadoFilter || u.estado === estadoFilter
+  );
+
+  const deleteUsuario = (id: string) => {
+    setUsuarios(usuarios.filter((u) => u.id !== id));
   };
 
-  const handleRegister = () => {
-    if (!values.nombre || !values.apellido || !values.correo || !values.password) {
-      toast.current?.show({
-        severity: "warn",
-        summary: "Campos incompletos",
-        detail: "Por favor complete todos los campos",
-        life: 3000,
-      });
-      return;
-    }
-
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      toast.current?.show({
-        severity: "success",
-        summary: "Registro exitoso",
-        detail: `Bienvenido ${values.nombre} ${values.apellido}`,
-        life: 2000,
-      });
-
-      setTimeout(() => router.push("/login"), 2000);
-    }, 1500);
+const addUsuario = (data: NewUsuario) => {
+  const nextId = (usuarios.length + 1).toString();
+  const newItem: Usuario = {
+    id: nextId,
+    nombre: data.nombre,
+    correo: data.correo,
+    rol: data.rol,
+    estado: data.estado,
+    created_at: new Date().toISOString().split("T")[0],
+    updated_at: new Date().toISOString().split("T")[0],
   };
+  setUsuarios([newItem, ...usuarios]);
+  setShowForm(false);
+};
+
+
+
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-white">
-      <Toast ref={toast} />
-      <Card className="p-8 rounded-xl shadow-lg w-96">
-        <h1 className="text-2xl font-bold text-center mb-4">Registro de Usuario</h1>
-        <p className="text-center text-sm mb-6">Complete los datos para crear su cuenta</p>
-
-        <div className="mb-4">
-          <label className="block text-sm font-semibold text-gray-700 mb-1">Nombre:</label>
-          <InputText
-            value={values.nombre}
-            onChange={(e) => setValues({ ...values, nombre: e.target.value })}
-            placeholder="Ingrese su nombre"
-            style={inputStyle}
-          />
+    <div className="bg-gray-100 min-h-screen p-6">
+      <Card className="max-w-[1200px] mx-auto shadow-md">
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-xl font-bold">Listado de Usuarios</h1>
+          <Button label="Nuevo Usuario" icon="pi pi-plus" onClick={() => setShowForm(true)} />
         </div>
 
-        <div className="mb-4">
-          <label className="block text-sm font-semibold text-gray-700 mb-1">Apellido:</label>
-          <InputText
-            value={values.apellido}
-            onChange={(e) => setValues({ ...values, apellido: e.target.value })}
-            placeholder="Ingrese su apellido"
-            style={inputStyle}
+        <div className="flex gap-3 mb-4">
+          <Dropdown
+            value={estadoFilter}
+            options={["Activo", "Inactivo"]}
+            onChange={(e) => setEstadoFilter(e.value)}
+            placeholder="Filtrar por estado"
+            showClear
           />
+          <Button label="Limpiar filtros" onClick={() => setEstadoFilter(null)} />
         </div>
 
-        <div className="mb-4">
-          <label className="block text-sm font-semibold text-gray-700 mb-1">Correo:</label>
-          <InputText
-            value={values.correo}
-            onChange={(e) => setValues({ ...values, correo: e.target.value })}
-            placeholder="Ingrese su correo"
-            style={inputStyle}
+        <DataTable value={filteredUsuarios} paginator rows={5} stripedRows responsiveLayout="scroll">
+          <Column field="nombre" header="Nombre" />
+          <Column field="correo" header="Correo" />
+          <Column field="rol" header="Rol" />
+          <Column
+            field="estado"
+            header="Estado"
+            body={(rowData) => (
+              <Tag value={rowData.estado} severity={rowData.estado === "Activo" ? "success" : "danger"} />
+            )}
           />
-        </div>
-
-        <div className="mb-6">
-          <label className="block text-sm font-semibold text-gray-700 mb-1">Contraseña:</label>
-          <Password
-            value={values.password}
-            onChange={(e) => setValues({ ...values, password: e.target.value })}
-            placeholder="Ingrese su contraseña"
-            toggleMask
-            feedback={false}
-            inputStyle={inputStyle}
+          <Column field="created_at" header="Creado" />
+          <Column field="updated_at" header="Actualizado" />
+          <Column
+            header="Eliminar"
+            body={(rowData) => (
+              <Button icon="pi pi-trash" className="p-button-danger p-button-sm" onClick={() => deleteUsuario(rowData.id)} />
+            )}
           />
-        </div>
-
-        <div className="flex flex-col items-center gap-2">
-          <Button
-            label="Registrar"
-            loading={loading}
-            onClick={handleRegister}
-            className="bg-green-700 w-44"
-          />
-          <Button
-            label="Volver al login"
-            onClick={() => router.push("/login")}
-            className="bg-blue-700 w-44"
-          />
-        </div>
+        </DataTable>
       </Card>
+
+      <UsuarioForm visible={showForm} onHide={() => setShowForm(false)} onSave={addUsuario} />
     </div>
   );
 }

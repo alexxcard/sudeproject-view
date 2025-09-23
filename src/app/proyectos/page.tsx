@@ -1,164 +1,120 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Card } from "primereact/card";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
-import { InputText } from "primereact/inputtext";
 import { Button } from "primereact/button";
-import { Dialog } from "primereact/dialog";
-import { useRouter } from "next/navigation";
+import { Dropdown } from "primereact/dropdown";
+import { NewProyecto } from "@/types";
+import { Proyecto } from "@/interface";
+import ProyectoForm from "@/components/features/ProyectForm";
 
-interface Proyecto {
-  id: string;
-  name: string;
-  description: string;
-  owner: string;
-  members: string[];
-  created_at: string;
-}
-
+// Mock de ejemplo
 const proyectosMock: Proyecto[] = [
   {
     id: "p1",
     name: "Sistema Web",
     description: "Proyecto principal de la empresa",
-    owner: "Juan Pérez",
-    members: ["María Gómez", "Pedro Torres"],
+    status: "Activo",
+    start_date: "2025-09-01",
+    end_date: "2025-12-31",
     created_at: "2025-09-01",
+    updated_at: "2025-09-01",
   },
   {
     id: "p2",
     name: "Gestor de Reportes",
     description: "Generación y descarga de reportes",
-    owner: "Luis Fernández",
-    members: ["Carlos Díaz", "Laura García"],
+    status: "En Progreso",
+    start_date: "2025-09-05",
+    end_date: "",
     created_at: "2025-09-05",
+    updated_at: "2025-09-05",
   },
 ];
 
 export default function ProyectosPage() {
   const [proyectos, setProyectos] = useState(proyectosMock);
-  const [newProyecto, setNewProyecto] = useState({
-    name: "",
-    description: "",
-    owner: "",
-    members: "",
-  });
-  const [showDialog, setShowDialog] = useState(false);
-  const router = useRouter();
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
 
-  const addProyecto = () => {
-    if (!newProyecto.name || !newProyecto.owner) {
-      alert("El nombre y propietario son obligatorios.");
-      return;
-    }
-
-    const nextId = `p${proyectos.length + 1}`;
-    const newItem: Proyecto = {
-      id: nextId,
-      name: newProyecto.name,
-      description: newProyecto.description,
-      owner: newProyecto.owner,
-      members: newProyecto.members
-        ? newProyecto.members.split(",").map((m) => m.trim())
-        : [],
-      created_at: new Date().toISOString().split("T")[0],
-    };
-
-    setProyectos([newItem, ...proyectos]);
-    setNewProyecto({ name: "", description: "", owner: "", members: "" });
-    setShowDialog(false); // cerramos el modal
+ const addProyecto = (data: NewProyecto) => {
+  const nextId = (proyectos.length + 1).toString();
+  const newItem: Proyecto = {
+    id: nextId,
+    name: data.name,
+    description: data.description,
+    status: data.status,
+    start_date: data.start_date,
+    end_date: data.end_date,
+    created_at: new Date().toISOString().split("T")[0],
+    updated_at: new Date().toISOString().split("T")[0],
   };
+  setProyectos([newItem, ...proyectos]);
+};
+  const filteredProyectos = proyectos.filter(
+    (p) => !statusFilter || p.status === statusFilter
+  );
 
   return (
     <div className="bg-gray-100 min-h-screen p-6">
-      {/* Botón Crear Nuevo Proyecto */}
-      <div className="max-w-[1200px] mx-auto mb-4 flex justify-end">
-        <Button
-          label="Crear Nuevo Proyecto"
-          icon="pi pi-plus"
-          onClick={() => setShowDialog(true)}
-        />
-      </div>
+      <Card className="shadow-md mb-4">
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-xl font-bold">Listado de Proyectos</h1>
+          <div className="flex gap-2">
+            <Button
+              label="Nuevo Proyecto"
+              icon="pi pi-plus"
+              onClick={() => setShowForm(true)}
+            />
+            <Link href="/home">
+              <Button label="Volver al inicio" icon="pi pi-home" />
+            </Link>
+          </div>
+        </div>
 
-      {/* Modal para nuevo proyecto */}
-      <Dialog
-        header="Agregar Nuevo Proyecto"
-        visible={showDialog}
-        style={{ width: "400px" }}
-        onHide={() => setShowDialog(false)}
-      >
-        <div className="grid grid-cols-1 gap-3">
-          <InputText
-            placeholder="Nombre"
-            value={newProyecto.name}
-            onChange={(e) =>
-              setNewProyecto({ ...newProyecto, name: e.target.value })
-            }
+        {/* Filtro por estado */}
+        <div className="flex flex-wrap gap-3 mb-4">
+          <Dropdown
+            value={statusFilter}
+            options={["Activo", "Inactivo", "En Progreso"]}
+            onChange={(e) => setStatusFilter(e.value)}
+            placeholder="Filtrar por estado"
+            showClear
           />
-          <InputText
-            placeholder="Propietario"
-            value={newProyecto.owner}
-            onChange={(e) =>
-              setNewProyecto({ ...newProyecto, owner: e.target.value })
-            }
-          />
-          <InputText
-            placeholder="Miembros (separados por coma)"
-            value={newProyecto.members}
-            onChange={(e) =>
-              setNewProyecto({ ...newProyecto, members: e.target.value })
-            }
-          />
-          <InputText
-            placeholder="Descripción"
-            value={newProyecto.description}
-            onChange={(e) =>
-              setNewProyecto({ ...newProyecto, description: e.target.value })
-            }
+          <Button
+            label="Limpiar filtros"
+            onClick={() => setStatusFilter(null)}
           />
         </div>
-        <Button
-          className="mt-3"
-          label="Agregar Proyecto"
-          onClick={addProyecto}
-        />
-      </Dialog>
 
-      {/* Botón volver al inicio */}
-      <div className="max-w-[1200px] mx-auto mb-4">
-        <Button
-          label="Volver al inicio"
-          icon="pi pi-home"
-          onClick={() => router.push("/home")}
-        />
-      </div>
-
-      {/* Tabla de proyectos */}
-      <Card className="max-w-[1200px] mx-auto">
-        <h1 className="text-xl text-center font-bold mb-4">
-          Listado de Proyectos
-        </h1>
+        {/* Tabla de proyectos */}
         <DataTable
-          value={proyectos}
+          value={filteredProyectos}
           paginator
           rows={5}
           stripedRows
           responsiveLayout="scroll"
+          size="small"
         >
-          <Column field="id" header="ID" />
           <Column field="name" header="Nombre" />
           <Column field="description" header="Descripción" />
-          <Column field="owner" header="Propietario" />
-          <Column
-            field="members"
-            header="Miembros"
-            body={(row) => row.members.join(", ")}
-          />
+          <Column field="status" header="Estado" />
+          <Column field="start_date" header="Fecha inicio" />
+          <Column field="end_date" header="Fecha fin" />
           <Column field="created_at" header="Creado" />
+          <Column field="updated_at" header="Actualizado" />
         </DataTable>
       </Card>
+
+      {/* Modal del formulario */}
+      <ProyectoForm
+        visible={showForm}
+        onHide={() => setShowForm(false)}
+        onSave={addProyecto}
+      />
     </div>
   );
 }

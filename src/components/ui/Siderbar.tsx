@@ -4,6 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const menuItems = [
+{
+    key: "home",
+    label: "Inicio",
+    href: "/home",
+    icon: "pi pi-home",
+  },
   {
     key: "incidencias",
     label: "Incidencias",

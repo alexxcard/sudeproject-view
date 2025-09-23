@@ -8,15 +8,12 @@ import { Column } from "primereact/column";
 import { Tag } from "primereact/tag";
 import { Dropdown } from "primereact/dropdown";
 import { Button } from "primereact/button";
-import { InputText } from "primereact/inputtext";
-import { InputTextarea } from "primereact/inputtextarea";
-
-// Tipos para RowData
-type RowDataStatus = { status: string };
-type RowDataPriority = { priority: string };
+import { NewIncidencia, RowDataPriority, RowDataStatus } from "@/types";
+import IncidenForm from "@/components/features/IncidentForm";
+import { Incidencia } from "@/interface";
 
 // Datos de ejemplo
-const incidenciasMock = [
+const incidenciasMock: Incidencia[] = [
   {
     id: "1a2b3c",
     title: "Error en login",
@@ -41,60 +38,39 @@ const incidenciasMock = [
     created_at: "2025-09-17",
     updated_at: "2025-09-18",
   },
-  {
-    id: "7g8h9i",
-    title: "Error en base de datos",
-    description: "Caídas frecuentes en PostgreSQL",
-    status: "Closed",
-    priority: "Critical",
-    project: "Base de Datos",
-    reporter: "Carlos Díaz",
-    assignee: "María Gómez",
-    created_at: "2025-09-15",
-    updated_at: "2025-09-16",
-  },
-  {
-    id: "10j11k",
-    title: "Bug en UI",
-    description: "Botón no responde al click",
-    status: "Open",
-    priority: "Low",
-    project: "Sistema Web",
-    reporter: "Laura García",
-    assignee: "Pedro Torres",
-    created_at: "2025-09-12",
-    updated_at: "2025-09-14",
-  },
 ];
 
 export default function IncidenciasPage() {
-  const [incidencias, setIncidencias] = useState(incidenciasMock);
+  const [incidencias, setIncidencias] = useState<Incidencia[]>(incidenciasMock);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [priorityFilter, setPriorityFilter] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
 
+  /** 🔹 Eliminar incidencia */
   const deleteIncidencia = (id: string) => {
     setIncidencias(incidencias.filter((inc) => inc.id !== id));
   };
 
-  const [newIncidencia, setNewIncidencia] = useState({
-    title: "",
-    description: "",
-    status: "Open",
-    priority: "Low",
-    project: "",
-    reporter: "",
-    assignee: "",
-  });
+/** 🔹 Agregar incidencia */
+const addIncidencia = (data: NewIncidencia) => {
+  const nextId = (incidencias.length + 1).toString();
+  const newItem: Incidencia = {
+    id: nextId,
+    ...data,
+    created_at: new Date().toISOString().split("T")[0],
+    updated_at: new Date().toISOString().split("T")[0],
+  };
+  setIncidencias([newItem, ...incidencias]);
+};
 
-  // Filtrado dinámico
+  /** 🔹 Filtrar incidencias */
   const filteredIncidencias = incidencias.filter(
     (i) =>
       (!statusFilter || i.status === statusFilter) &&
       (!priorityFilter || i.priority === priorityFilter)
   );
 
-  // Templates para etiquetas
+  /** 🔹 Render estado */
   const statusTemplate = (rowData: RowDataStatus) => {
     const severity =
       rowData.status === "Open"
@@ -105,6 +81,7 @@ export default function IncidenciasPage() {
     return <Tag value={rowData.status} severity={severity} />;
   };
 
+  /** 🔹 Render prioridad */
   const priorityTemplate = (rowData: RowDataPriority) => {
     const severity =
       rowData.priority === "Critical"
@@ -117,35 +94,10 @@ export default function IncidenciasPage() {
     return <Tag value={rowData.priority} severity={severity} />;
   };
 
-  // Función para agregar nueva incidencia
-  const addIncidencia = () => {
-    const nextId = (incidencias.length + 1).toString();
-    const newItem = {
-      id: nextId,
-      ...newIncidencia,
-      created_at: new Date().toISOString().split("T")[0],
-      updated_at: new Date().toISOString().split("T")[0],
-    };
-
-    setIncidencias([newItem, ...incidencias]);
-
-    // Limpiar formulario y cerrarlo
-    setNewIncidencia({
-      title: "",
-      description: "",
-      status: "Open",
-      priority: "Low",
-      project: "",
-      reporter: "",
-      assignee: "",
-    });
-    setShowForm(false);
-  };
-
   return (
     <div className="bg-[#f0f4f8] min-h-screen p-6">
-      {/* Listado */}
       <Card className="shadow-md mb-4">
+        {/* Header */}
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-xl font-bold">Listado de Incidencias</h1>
           <div className="flex gap-2">
@@ -196,35 +148,17 @@ export default function IncidenciasPage() {
         >
           <Column field="title" header="Título" />
           <Column field="description" header="Descripción" />
-          <Column
-            style={{ width: "120px" }}
-            field="status"
-            header="Estado"
-            body={statusTemplate}
-          />
+          <Column field="status" header="Estado" body={statusTemplate} />
           <Column field="priority" header="Prioridad" body={priorityTemplate} />
           <Column field="project" header="Proyecto" />
-          <Column
-            style={{ width: "120px" }}
-            field="reporter"
-            header="Reportado por"
-          />
-          <Column
-            style={{ width: "120px" }}
-            field="assignee"
-            header="Asignado a"
-          />
-          <Column
-            style={{ width: "120px" }}
-            field="created_at"
-            header="Creado"
-          />
+          <Column field="reporter" header="Reportado por" />
+          <Column field="assignee" header="Asignado a" />
+          <Column field="created_at" header="Creado" />
           <Column field="updated_at" header="Actualizado" />
           <Column
-            header="eliminar"
-            body={(rowData) => (
+            header="Accion"
+            body={(rowData: Incidencia) => (
               <Button
-                label=""
                 icon="pi pi-trash"
                 className="p-button-danger p-button-sm"
                 onClick={() => deleteIncidencia(rowData.id)}
@@ -234,79 +168,12 @@ export default function IncidenciasPage() {
         </DataTable>
       </Card>
 
-      {/* Formulario */}
-      {showForm && (
-        <Card className="p-4 shadow-md">
-          <h2 className="text-lg font-bold mb-3">Agregar Nueva Incidencia</h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <InputText
-              placeholder="Título"
-              value={newIncidencia.title}
-              onChange={(e) =>
-                setNewIncidencia({ ...newIncidencia, title: e.target.value })
-              }
-            />
-            <InputText
-              placeholder="Proyecto"
-              value={newIncidencia.project}
-              onChange={(e) =>
-                setNewIncidencia({ ...newIncidencia, project: e.target.value })
-              }
-            />
-            <InputText
-              placeholder="Reportado por"
-              value={newIncidencia.reporter}
-              onChange={(e) =>
-                setNewIncidencia({ ...newIncidencia, reporter: e.target.value })
-              }
-            />
-            <InputText
-              placeholder="Asignado a"
-              value={newIncidencia.assignee}
-              onChange={(e) =>
-                setNewIncidencia({ ...newIncidencia, assignee: e.target.value })
-              }
-            />
-            <Dropdown
-              value={newIncidencia.status}
-              options={["Open", "In Progress", "Closed"]}
-              onChange={(e) =>
-                setNewIncidencia({ ...newIncidencia, status: e.value })
-              }
-              placeholder="Estado"
-            />
-            <Dropdown
-              value={newIncidencia.priority}
-              options={["Critical", "High", "Medium", "Low"]}
-              onChange={(e) =>
-                setNewIncidencia({ ...newIncidencia, priority: e.value })
-              }
-              placeholder="Prioridad"
-            />
-            <InputTextarea
-              value={newIncidencia.description}
-              onChange={(e) =>
-                setNewIncidencia({
-                  ...newIncidencia,
-                  description: e.target.value,
-                })
-              }
-              placeholder="Descripción"
-              rows={3}
-            />
-          </div>
-
-          <div className="flex gap-2 mt-3">
-            <Button label="Guardar" onClick={addIncidencia} />
-            <Button
-              label="Cancelar"
-              className="p-button-secondary"
-              onClick={() => setShowForm(false)}
-            />
-          </div>
-        </Card>
-      )}
+      {/* Modal del formulario */}
+      <IncidenForm
+        visible={showForm}
+        onHide={() => setShowForm(false)}
+        onSave={addIncidencia}
+      />
     </div>
   );
 }
