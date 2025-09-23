@@ -1,4 +1,3 @@
-// src/app/layout.tsx
 "use client";
 
 import { usePathname } from "next/navigation";
@@ -12,27 +11,34 @@ type RootLayoutProps = {
 
 export default function RootLayout({ children }: RootLayoutProps) {
   const pathname = usePathname();
-  const isLogin = pathname.startsWith("/login"); // Detectamos ruta de login
+  const isLogin = pathname.startsWith("/login");
 
-  // Valores de prueba para HeaderNavBar
   const session = "Usuario";
   const name = "Usuario";
 
   return (
     <html lang="es">
-      <body>
+      <body className="h-screen overflow-hidden">
         {!isLogin ? (
           <div className="flex flex-col h-screen">
-            {/* Header */}
-            <HeaderNavBar session={session} name={name} />
-            <div className="flex flex-1">
-              {/* Sidebar */}
-              <Sidebar />
-              <main className="flex-1 overflow-auto bg-[#f0f4f8]">{children}</main>
+            {/* Header fijo */}
+            <div className="fixed top-0 left-0 right-0 z-10">
+              <HeaderNavBar session={session} name={name} />
+            </div>
+
+            <div className="flex flex-1 pt-16">
+              {/* Sidebar fijo debajo del header */}
+              <div className="fixed top-16 left-0 h-[calc(100vh-4rem)] z-20">
+                <Sidebar />
+              </div>
+
+              {/* Contenido principal con margen para sidebar y header */}
+              <main className="flex-1 ml-56 p-4 overflow-auto h-[calc(100vh-4rem)]">
+                {children}
+              </main>
             </div>
           </div>
         ) : (
-          // Para login, renderizamos solo el contenido
           children
         )}
       </body>
