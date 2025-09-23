@@ -31,7 +31,7 @@ export default function Sidebar() {
           onClick={() => setCollapsed(!collapsed)}
           className="p-1 rounded hover:bg-gray-100"
         >
-          {collapsed ? "➡️" : "⬅️"}
+          
         </button>
       </div>
 
