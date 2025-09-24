@@ -1,69 +1,129 @@
-// src/app/tareas/page.tsx
 "use client";
+import { Tarea } from "@/interface";
+import { useState, ChangeEvent, FormEvent } from "react";
 
-import { useState } from "react";
-import { Card } from "primereact/card";
-import { DataTable } from "primereact/datatable";
-import { Column } from "primereact/column";
-import { Button } from "primereact/button";
-import TareaForm, { Tarea, NewTarea } from "@/components/forms/TareaForm";
 
-const tareasMock: Tarea[] = [
-  {
-    id: "t1",
-    title: "Diseño de UI",
-    description: "Crear componentes principales",
-    status: "Open",
-    priority: "High",
-    assignee: "María Gómez",
-    due_date: "2025-09-25",
-  },
-  {
-    id: "t2",
-    title: "Integración API",
-    description: "Conectar frontend con backend",
-    status: "In Progress",
-    priority: "Medium",
-    assignee: "Pedro Torres",
-    due_date: "2025-09-28",
-  },
-];
+interface TareaFormProps {
+  tarea?: Tarea;
+  onSubmit: (tarea: Tarea) => void;
+  onCancel?: () => void;
+}
 
-export default function TareasPage() {
-  const [tareas, setTareas] = useState<Tarea[]>(tareasMock);
-  const [showForm, setShowForm] = useState(false);
+export default function TareaForm({ tarea, onSubmit, onCancel }: TareaFormProps) {
+  const [formData, setFormData] = useState<Tarea>({
+    id: tarea?.id || "",
+    title: tarea?.title || "",
+    description: tarea?.description || "",
+    status: tarea?.status || "Open",
+    priority: tarea?.priority || "Medium",
+    assignee: tarea?.assignee || "",
+    due_date: tarea?.due_date || "",
+  });
 
-  const addTarea = (data: NewTarea) => {
-    const nextId = (tareas.length + 1).toString();
-    const newItem: Tarea = {
-      id: nextId,
-      ...data,
-    };
-    setTareas([newItem, ...tareas]);
-    setShowForm(false);
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    onSubmit(formData);
   };
 
   return (
-    <div className="bg-gray-100 min-h-screen p-6">
-      <Card className="max-w-[1200px] mx-auto mb-4">
-        <div className="flex justify-between items-center mb-4">
-          <h1 className="text-xl font-bold">Listado de Tareas</h1>
-          <Button label="Nueva Tarea" icon="pi pi-plus" onClick={() => setShowForm(true)} />
-        </div>
+    <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow-md max-w-lg mx-auto mb-6">
+      <h2 className="text-lg font-bold mb-4">{tarea ? "Editar Tarea" : "Nueva Tarea"}</h2>
 
-        <DataTable value={tareas} paginator rows={5} stripedRows responsiveLayout="scroll">
-          <Column field="id" header="ID" />
-          <Column field="title" header="Título" />
-          <Column field="description" header="Descripción" />
-          <Column field="status" header="Estado" />
-          <Column field="priority" header="Prioridad" />
-          <Column field="assignee" header="Asignado a" />
-          <Column field="due_date" header="Fecha límite" />
-        </DataTable>
-      </Card>
+      <div className="mb-3">
+        <label className="block mb-1 font-medium">Título</label>
+        <input
+          type="text"
+          name="title"
+          value={formData.title}
+          onChange={handleChange}
+          className="w-full border rounded p-2"
+          required
+        />
+      </div>
 
-      {/* Modal */}
-      <TareaForm visible={showForm} onHide={() => setShowForm(false)} onSave={addTarea} />
-    </div>
+      <div className="mb-3">
+        <label className="block mb-1 font-medium">Descripción</label>
+        <textarea
+          name="description"
+          value={formData.description}
+          onChange={handleChange}
+          className="w-full border rounded p-2"
+          required
+        />
+      </div>
+
+      <div className="mb-3">
+        <label className="block mb-1 font-medium">Estado</label>
+        <select
+          name="status"
+          value={formData.status}
+          onChange={handleChange}
+          className="w-full border rounded p-2"
+        >
+          <option value="Open">Open</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Completed">Completed</option>
+        </select>
+      </div>
+
+      <div className="mb-3">
+        <label className="block mb-1 font-medium">Prioridad</label>
+        <select
+          name="priority"
+          value={formData.priority}
+          onChange={handleChange}
+          className="w-full border rounded p-2"
+        >
+          <option value="High">High</option>
+          <option value="Medium">Medium</option>
+          <option value="Low">Low</option>
+        </select>
+      </div>
+
+      <div className="mb-3">
+        <label className="block mb-1 font-medium">Asignado a</label>
+        <input
+          type="text"
+          name="assignee"
+          value={formData.assignee}
+          onChange={handleChange}
+          className="w-full border rounded p-2"
+        />
+      </div>
+
+      <div className="mb-4">
+        <label className="block mb-1 font-medium">Fecha límite</label>
+        <input
+          type="date"
+          name="due_date"
+          value={formData.due_date}
+          onChange={handleChange}
+          className="w-full border rounded p-2"
+        />
+      </div>
+
+      <div className="flex gap-2 justify-end">
+        {onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"
+          >
+            Cancelar
+          </button>
+        )}
+        <button
+          type="submit"
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+        >
+          {tarea ? "Actualizar" : "Crear"}
+        </button>
+      </div>
+    </form>
   );
 }

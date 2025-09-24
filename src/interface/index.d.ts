@@ -53,3 +53,13 @@ export interface Usuario {
   created_at: string;
   updated_at: string;
 }
+
+export interface Tarea {
+  id: string;
+  title: string;
+  description: string;
+  status: string;
+  priority: string;
+  assignee: string;
+  due_date: string;
+}

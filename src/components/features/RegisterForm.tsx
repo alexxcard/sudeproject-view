@@ -5,26 +5,33 @@ import { InputText } from "primereact/inputtext";
 import { Button } from "primereact/button";
 import { Tag } from "primereact/tag";
 import { Toast } from "primereact/toast";
+import { useRouter } from "next/navigation";
 
 interface RegisterFormValues {
   nombre: string;
   apellido: string;
   correo: string;
+  username: string;
+  password: string;
 }
 
 export default function RegisterContainer() {
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState(false);
   const [values, setValues] = useState<RegisterFormValues>({
     nombre: "",
     apellido: "",
     correo: "",
+    username: "",
+    password: "",
   });
 
   const toast = useRef<Toast>(null);
+  const router = useRouter();
   const primaryColor = "#48595B";
 
-  const handleRegister = () => {
-    if (!values.nombre || !values.apellido || !values.correo) {
+  const handleRegister = async () => {
+    const { nombre, apellido, correo, username, password } = values;
+    if (!nombre || !apellido || !correo || !username || !password) {
       toast.current?.show({
         severity: "warn",
         summary: "Campos incompletos",
@@ -34,157 +41,105 @@ export default function RegisterContainer() {
       return;
     }
 
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      setLoading(true);
+      await registerUser(values); // Llamada al backend
+
       toast.current?.show({
         severity: "success",
         summary: "Registro exitoso",
-        detail: `Bienvenido ${values.nombre} ${values.apellido}`,
+        detail: `Cuenta creada para ${username}`,
+        life: 2500,
+      });
+
+      setTimeout(() => {
+        router.push("/login"); // Redirige al login
+      }, 1500);
+    } catch (err: any) {
+      toast.current?.show({
+        severity: "error",
+        summary: "Error en el registro",
+        detail: err.message || "No se pudo crear la cuenta",
         life: 3000,
       });
-    }, 1500);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        minHeight: "100vh",
-        backgroundColor: "#f3f3f3",
-      }}
-    >
+    <div className="flex justify-center items-center min-h-screen bg-gray-100">
       <Toast ref={toast} />
-
       <Card
         style={{
-          padding: "32px",
-          width: "360px",
-          borderRadius: "16px",
+          padding: 32,
+          width: 360,
+          borderRadius: 16,
           boxShadow: "0 20px 40px rgba(0,0,0,0.3)",
         }}
       >
-        <div style={{ textAlign: "center", marginBottom: "24px" }}>
-          <h1
-            style={{
-              fontWeight: "800",
-              fontSize: "24px",
-              marginBottom: "8px",
-              color: "#021923",
-            }}
-          >
+        <div className="text-center mb-6">
+          <h1 className="font-extrabold text-2xl mb-1 text-gray-900">
             Registro de Usuario
           </h1>
-          <p style={{ fontSize: "12px", color: "#021923" }}>
+          <p className="text-sm text-gray-700">
             Complete los datos para crear su cuenta
           </p>
         </div>
 
-        <div>
-          <div style={{ marginBottom: "16px" }}>
-            <label
-              style={{
-                display: "block",
-                fontWeight: "600",
-                color: primaryColor,
-                fontSize: "12px",
-                marginBottom: "4px",
-              }}
-            >
-              Nombre:
-            </label>
-            <InputText
-              value={values.nombre}
-              onChange={(e) => setValues({ ...values, nombre: e.target.value })}
-              placeholder="Ingrese su nombre"
-              style={{
-                width: "250px",
-                height: "32px",
-                borderColor: primaryColor,
-              }}
-            />
-          </div>
+        <div className="space-y-4">
+          <InputField label="Nombre" value={values.nombre} onChange={(v: any) => setValues({ ...values, nombre: v })} primaryColor={primaryColor} />
+          <InputField label="Apellido" value={values.apellido} onChange={(v: any) => setValues({ ...values, apellido: v })} primaryColor={primaryColor} />
+          <InputField label="Correo" value={values.correo} onChange={(v: any) => setValues({ ...values, correo: v })} primaryColor={primaryColor} />
+          <InputField label="Usuario" value={values.username} onChange={(v: any) => setValues({ ...values, username: v })} primaryColor={primaryColor} />
+          <InputField label="Contraseña" value={values.password} onChange={(v: any) => setValues({ ...values, password: v })} primaryColor={primaryColor} type="password" />
 
-          <div style={{ marginBottom: "16px" }}>
-            <label
-              style={{
-                display: "block",
-                fontWeight: "600",
-                color: primaryColor,
-                fontSize: "12px",
-                marginBottom: "4px",
-              }}
-            >
-              Apellido:
-            </label>
-            <InputText
-              value={values.apellido}
-              onChange={(e) =>
-                setValues({ ...values, apellido: e.target.value })
-              }
-              placeholder="Ingrese su apellido"
-              style={{
-                width: "250px",
-                height: "32px",
-                borderColor: primaryColor,
-              }}
-            />
-          </div>
-
-          <div style={{ marginBottom: "24px" }}>
-            <label
-              style={{
-                display: "block",
-                fontWeight: "600",
-                color: primaryColor,
-                fontSize: "12px",
-                marginBottom: "4px",
-              }}
-            >
-              Correo:
-            </label>
-            <InputText
-              value={values.correo}
-              onChange={(e) => setValues({ ...values, correo: e.target.value })}
-              placeholder="Ingrese su correo"
-              style={{
-                width: "250px",
-                height: "32px",
-                borderColor: primaryColor,
-              }}
-            />
-          </div>
-
-          <div style={{ textAlign: "center", marginBottom: "16px" }}>
+          <div className="text-center">
             <Button
-              label="Registrar"
+              label="Crear cuenta"
               loading={loading}
               onClick={handleRegister}
-              style={{
-                backgroundColor: "#608c3d",
-                borderColor: primaryColor,
-                width: "180px",
-                height: "36px",
-              }}
+              style={{ backgroundColor: "#608c3d", borderColor: primaryColor, width: 180, height: 36 }}
             />
           </div>
         </div>
 
-        <div style={{ textAlign: "center", marginTop: "16px" }}>
-          <Tag
-            value="SUDEPROJECTS 2025"
-            severity="info"
-            style={{
-              backgroundColor: primaryColor,
-              color: "#fff",
-              fontSize: "10px",
-              padding: "4px 8px",
-            }}
-          />
+        <div className="text-center mt-4">
+          <Tag value="SUDEPROJECTS 2025" severity="info" style={{ backgroundColor: primaryColor, color: "#fff", fontSize: 10, padding: "4px 8px" }} />
         </div>
       </Card>
     </div>
   );
+}
+
+// Componente para inputs
+function InputField({ label, value, onChange, primaryColor, type = "text" }: any) {
+  return (
+    <div>
+      <label className="block text-xs font-semibold text-gray-700 mb-1">{label}</label>
+      <InputText
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={`Ingrese su ${label.toLowerCase()}`}
+        style={{ width: 250, height: 32, borderColor: primaryColor }}
+      />
+    </div>
+  );
+}
+
+// Función para crear usuario en backend
+async function registerUser(values: RegisterFormValues) {
+  const res = await fetch("http://127.0.0.1:8000/api/users/", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(values),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(errorData.detail || "Error al crear usuario");
+  }
+
+  return res.json();
 }
