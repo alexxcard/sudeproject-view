@@ -12,7 +12,7 @@ import { Proyecto } from "@/interface";
 import ProyectoForm from "@/components/features/ProyectForm";
 
 // Mock de ejemplo
-const proyectosMock: Proyecto[] = [
+const proyectosMock: Proyecto[] = [ 
   {
     id: "p1",
     name: "Sistema Web",

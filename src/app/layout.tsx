@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import HeaderNavBar from "@/components/ui/HeaderNavBar";
 import Sidebar from "@/components/ui/Siderbar";
 import "./globals.css";
+import Provider from '@/components/Provider';
 
 type RootLayoutProps = {
   children: React.ReactNode;
@@ -34,7 +35,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
 
               {/* Contenido principal con margen para sidebar y header */}
               <main className="flex-1 ml-56 p-4 overflow-auto h-[calc(100vh-4rem)]">
-                {children}
+                <Provider>{children} </Provider>
               </main>
             </div>
           </div>
