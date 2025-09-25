@@ -130,15 +130,30 @@ function InputField({ label, value, onChange, primaryColor, type = "text" }: any
 
 // Función para crear usuario en backend
 async function registerUser(values: RegisterFormValues) {
+  // 👇 Mapeo de los campos al formato que Django espera
+  const payload = {
+    username: values.username,
+    password: values.password,
+    first_name: values.nombre,
+    last_name: values.apellido,
+    email: values.correo,
+  };
+
   const res = await fetch("http://127.0.0.1:8000/api/users/", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(values),
+    body: JSON.stringify(payload),
   });
 
   if (!res.ok) {
     const errorData = await res.json();
-    throw new Error(errorData.detail || "Error al crear usuario");
+    console.error("Error en registro:", errorData); // 👈 Para depuración
+    throw new Error(
+      errorData.username?.[0] ||
+      errorData.password?.[0] ||
+      errorData.email?.[0] ||
+      "Error al crear usuario"
+    );
   }
 
   return res.json();

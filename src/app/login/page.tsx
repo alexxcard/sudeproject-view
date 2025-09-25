@@ -3,6 +3,7 @@
 import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import LoginContainer from "@/components/features/LoginForm"; 
 
 export default function LoginPage() {
   const router = useRouter();
@@ -72,6 +73,15 @@ export default function LoginPage() {
             <p className="text-red-600 text-sm text-center">{error}</p>
           )}
 
+        
+          <button
+            type="button"
+            onClick={() => router.push("/login/register")}
+            className="text-blue-600 underline text-sm"
+            >
+            ¿No tienes cuenta? Regístrate
+            </button>
+
           {/* Login Button */}
           <button
             type="submit"
@@ -81,21 +91,7 @@ export default function LoginPage() {
             {loading ? "Ingresando..." : "Iniciar Sesión"}
           </button>
         </form>
-
-        {/* Divider */}
-        <div className="my-6 flex items-center">
-          <div className="flex-grow border-t border-gray-300"></div>
-          <span className="mx-3 text-gray-500 text-sm">o</span>
-          <div className="flex-grow border-t border-gray-300"></div>
-        </div>
-
-        {/* Register Button */}
-        <button
-          onClick={() => router.push("/register")}
-          className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg transition duration-200"
-        >
-          Crear una cuenta
-        </button>
+       
       </div>
     </div>
   );
