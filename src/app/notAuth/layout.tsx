@@ -1,13 +1,10 @@
-export default function NotAuthLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+// src/app/notAuth/layout.tsx
+"use client";
+
+export default function NotAuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es">
-      <body>
-        <div className="h-screen overflow-hidden">{children}</div>
-      </body>
-    </html>
+    <div className="h-screen overflow-hidden flex justify-center items-center">
+      {children}
+    </div>
   );
 }

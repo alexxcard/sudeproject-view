@@ -1,10 +1,11 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import HeaderNavBar from "@/components/ui/HeaderNavBar";
 import Sidebar from "@/components/ui/Siderbar";
 import "./globals.css";
-import Provider from '@/components/Provider';
+import Provider from "@/components/Provider";
 
 type RootLayoutProps = {
   children: React.ReactNode;
@@ -12,6 +13,15 @@ type RootLayoutProps = {
 
 export default function RootLayout({ children }: RootLayoutProps) {
   const pathname = usePathname();
+  const router = useRouter();
+
+  // Redirigir a /login si entra en "/"
+  useEffect(() => {
+    if (pathname === "/") {
+      router.push("/login");
+    }
+  }, [pathname, router]);
+
   const isLogin = pathname.startsWith("/login");
 
   const session = "Usuario";
@@ -33,9 +43,9 @@ export default function RootLayout({ children }: RootLayoutProps) {
                 <Sidebar />
               </div>
 
-              {/* Contenido principal con margen para sidebar y header */}
+              {/* Contenido principal */}
               <main className="flex-1 ml-56 p-4 overflow-auto h-[calc(100vh-4rem)]">
-                <Provider>{children} </Provider>
+                <Provider>{children}</Provider>
               </main>
             </div>
           </div>

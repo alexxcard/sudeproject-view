@@ -3,6 +3,7 @@ import { ProfileProps } from "@/types";
 import { useRouter } from "next/navigation";
 import React, { useState, useRef, useEffect } from "react";
 import { Toast } from "primereact/toast";
+import { signOut } from "next-auth/react"; // 👈 importa NextAuth
 
 export default function Profile({ session, name }: ProfileProps) {
   const router = useRouter();
@@ -12,11 +13,7 @@ export default function Profile({ session, name }: ProfileProps) {
 
   const handleLogout = async () => {
     try {
-      const res = await fetch("/api/logout", { method: "GET" });
-
-      if (!res.ok) {
-        throw new Error(`Error en el servidor: ${res.status}`);
-      }
+      await signOut({ redirect: false }); // 👈 cierra sesión usando NextAuth
 
       toast.current?.show({
         severity: "success",
@@ -26,7 +23,7 @@ export default function Profile({ session, name }: ProfileProps) {
       });
 
       setTimeout(() => {
-        router.push("/notAuth");
+        router.push("/notAuth"); // redirige a tu página pública
       }, 1000);
     } catch (error) {
       console.error(error);
@@ -43,10 +40,7 @@ export default function Profile({ session, name }: ProfileProps) {
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node)
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setOpen(false);
       }
     };
@@ -81,9 +75,7 @@ export default function Profile({ session, name }: ProfileProps) {
         )}
 
         <i
-          className={`pi ${
-            open ? "pi-angle-up" : "pi-angle-down"
-          } text-gray-600`}
+          className={`pi ${open ? "pi-angle-up" : "pi-angle-down"} text-gray-600`}
         ></i>
       </div>
 

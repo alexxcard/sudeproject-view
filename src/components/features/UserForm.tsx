@@ -5,50 +5,69 @@ import { Dialog } from "primereact/dialog";
 import { InputText } from "primereact/inputtext";
 import { Dropdown } from "primereact/dropdown";
 import { Button } from "primereact/button";
-import { NewUsuario } from "@/types";
-
 
 interface UsuarioFormProps {
   visible: boolean;
   onHide: () => void;
-  onSave: (data: NewUsuario) => void; // ⚡️ no any
+  onSave: (data: any) => void; // luego lo tipamos con tu NewUsuario actualizado
 }
 
 export default function UsuarioForm({ visible, onHide, onSave }: UsuarioFormProps) {
-const [usuario, setUsuario] = useState<NewUsuario>({
-  nombre: "",
-  correo: "",
-  rol: "",
-  estado: "Activo",
-});
+  const [usuario, setUsuario] = useState({
+    username: "",
+    password: "",
+    nombre: "",
+    apellido: "",
+    correo: "",
+    role: "Member",
+  });
+
   const handleSave = () => {
     onSave(usuario);
-    setUsuario({ nombre: "", correo: "", rol: "", estado: "Activo" });
+    setUsuario({
+      username: "",
+      password: "",
+      nombre: "",
+      apellido: "",
+      correo: "",
+      role: "Member",
+    });
   };
 
   return (
     <Dialog header="Agregar Nuevo Usuario" visible={visible} onHide={onHide} modal>
       <div className="flex flex-col gap-3">
         <InputText
+          placeholder="Username"
+          value={usuario.username}
+          onChange={(e) => setUsuario({ ...usuario, username: e.target.value })}
+        />
+        <InputText
+          placeholder="Password"
+          type="password"
+          value={usuario.password}
+          onChange={(e) => setUsuario({ ...usuario, password: e.target.value })}
+        />
+        <InputText
           placeholder="Nombre"
           value={usuario.nombre}
           onChange={(e) => setUsuario({ ...usuario, nombre: e.target.value })}
+        />
+        <InputText
+          placeholder="Apellido"
+          value={usuario.apellido}
+          onChange={(e) => setUsuario({ ...usuario, apellido: e.target.value })}
         />
         <InputText
           placeholder="Correo"
           value={usuario.correo}
           onChange={(e) => setUsuario({ ...usuario, correo: e.target.value })}
         />
-        <InputText
-          placeholder="Rol"
-          value={usuario.rol}
-          onChange={(e) => setUsuario({ ...usuario, rol: e.target.value })}
-        />
         <Dropdown
-          value={usuario.estado}
-          options={["Activo", "Inactivo"]}
-          onChange={(e) => setUsuario({ ...usuario, estado: e.value })}
-          placeholder="Estado"
+          value={usuario.role}
+          options={["Admin", "PM", "Member"]}
+          onChange={(e) => setUsuario({ ...usuario, role: e.value })}
+          placeholder="Rol"
         />
         <div className="flex gap-2 mt-2">
           <Button label="Guardar" onClick={handleSave} />
