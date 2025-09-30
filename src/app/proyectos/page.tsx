@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card } from "primereact/card";
 import { DataTable } from "primereact/datatable";
@@ -11,52 +11,51 @@ import { NewProyecto } from "@/types";
 import { Proyecto } from "@/interface";
 import ProyectoForm from "@/components/features/ProyectForm";
 
-// Mock de ejemplo
-const proyectosMock: Proyecto[] = [ 
-  {
-    id: "p1",
-    name: "Sistema Web",
-    description: "Proyecto principal de la empresa",
-    status: "Activo",
-    start_date: "2025-09-01",
-    end_date: "2025-12-31",
-    created_at: "2025-09-01",
-    updated_at: "2025-09-01",
-  },
-  {
-    id: "p2",
-    name: "Gestor de Reportes",
-    description: "Generación y descarga de reportes",
-    status: "En Progreso",
-    start_date: "2025-09-05",
-    end_date: "",
-    created_at: "2025-09-05",
-    updated_at: "2025-09-05",
-  },
-];
-
 export default function ProyectosPage() {
-  const [proyectos, setProyectos] = useState(proyectosMock);
+  const [proyectos, setProyectos] = useState<Proyecto[]>([]);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
 
- const addProyecto = (data: NewProyecto) => {
-  const nextId = (proyectos.length + 1).toString();
-  const newItem: Proyecto = {
-    id: nextId,
-    name: data.name,
-    description: data.description,
-    status: data.status,
-    start_date: data.start_date,
-    end_date: data.end_date,
-    created_at: new Date().toISOString().split("T")[0],
-    updated_at: new Date().toISOString().split("T")[0],
+  // 🔹 Cargar proyectos desde backend
+  useEffect(() => {
+    fetch("http://127.0.0.1:8000/api/projects/") // cambia al dominio de tu backend
+      .then((res) => res.json())
+      .then((data) => {
+        // Si la API tiene paginación (DRF por defecto), los proyectos vienen en `results`
+        if (Array.isArray(data)) {
+          setProyectos(data);
+        } else if (data.results && Array.isArray(data.results)) {
+          setProyectos(data.results);
+        } else {
+          console.error("Formato inesperado de respuesta:", data);
+        }
+      })
+      .catch((err) => console.error("Error cargando proyectos:", err));
+  }, []);
+
+  // 🔹 Guardar nuevo proyecto
+  const addProyecto = async (data: NewProyecto) => {
+    try {
+      const res = await fetch("http://127.0.0.1:8000/api/projects/", { // GET o POST
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+        credentials: "include", // si usas sesiones con cookies
+      });
+      if (!res.ok) throw new Error("Error al crear proyecto");
+      const nuevo = await res.json();
+
+      // Si hay paginación, igual agregamos al array actual
+      setProyectos((prev) => [nuevo, ...prev]);
+    } catch (err) {
+      console.error(err);
+    }
   };
-  setProyectos([newItem, ...proyectos]);
-};
-  const filteredProyectos = proyectos.filter(
-    (p) => !statusFilter || p.status === statusFilter
-  );
+
+  // 🔹 Filtrado seguro (solo si es array)
+  const filteredProyectos = Array.isArray(proyectos)
+    ? proyectos.filter((p) => !statusFilter || p.status === statusFilter)
+    : [];
 
   return (
     <div className="bg-gray-100 min-h-screen p-6">
@@ -75,7 +74,7 @@ export default function ProyectosPage() {
           </div>
         </div>
 
-        {/* Filtro por estado */}
+        {/* 🔹 Filtro por estado */}
         <div className="flex flex-wrap gap-3 mb-4">
           <Dropdown
             value={statusFilter}
@@ -90,7 +89,7 @@ export default function ProyectosPage() {
           />
         </div>
 
-        {/* Tabla de proyectos */}
+        {/* 🔹 Tabla de proyectos */}
         <DataTable
           value={filteredProyectos}
           paginator
@@ -101,15 +100,12 @@ export default function ProyectosPage() {
         >
           <Column field="name" header="Nombre" />
           <Column field="description" header="Descripción" />
-          <Column field="status" header="Estado" />
-          <Column field="start_date" header="Fecha inicio" />
-          <Column field="end_date" header="Fecha fin" />
+          <Column field="owner" header="Propietario" />
           <Column field="created_at" header="Creado" />
-          <Column field="updated_at" header="Actualizado" />
         </DataTable>
       </Card>
 
-      {/* Modal del formulario */}
+      {/* 🔹 Modal de formulario */}
       <ProyectoForm
         visible={showForm}
         onHide={() => setShowForm(false)}

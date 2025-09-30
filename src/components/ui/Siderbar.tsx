@@ -1,7 +1,13 @@
 "use client";
-import React, { useState } from "react";
+
+import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+
+type SidebarProps = {
+  collapsed: boolean;
+  setCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
+};
 
 const menuItems = [
   { key: "home", label: "Inicio", href: "/home", icon: "pi pi-home" },
@@ -11,29 +17,26 @@ const menuItems = [
   { key: "usuarios", label: "Usuarios", href: "/usuarios", icon: "pi pi-users" },
 ];
 
-export default function Sidebar() {
-  const [collapsed, setCollapsed] = useState(false);
+export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
   const pathname = usePathname();
 
   return (
     <div
-      className={`flex flex-col h-screen border-r shadow-md transition-all duration-300 relative ${
+      className={`flex flex-col h-full border-r shadow-md transition-all duration-300 ${
         collapsed ? "w-18" : "w-56"
       }`}
     >
-      {/* Botón colapsar/expandir posicionado al inicio del menú */}
-      <div className="flex justify-end p-1 mt-10">
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="p-1 rounded hover:bg-gray-100"
-        >
-          <i
-            className={`pi ${
-              collapsed ? "pi-angle-right" : "pi-angle-left"
-            } text-gray-600 text-lg`}
-          ></i>
-        </button>
-      </div>
+{/* Botón colapsar/expandir */}
+<div className="flex justify-end p-15 mt-16">
+  <button
+    onClick={() => setCollapsed(!collapsed)}
+    className="p-1 rounded hover:bg-gray-100"
+  >
+    <i
+      className={`pi ${collapsed ? "pi-angle-right" : "pi-angle-left"} text-gray-600 text-lg`}
+    />
+  </button>
+</div>
 
       {/* Menú */}
       <nav className="flex-1 overflow-y-auto mt-3">
@@ -51,9 +54,7 @@ export default function Sidebar() {
                   }`}
                 >
                   <i
-                    className={`${item.icon} text-lg ${
-                      isActive ? "font-bold text-white" : "text-gray-600"
-                    }`}
+                    className={`${item.icon} text-lg ${isActive ? "text-white font-bold" : "text-gray-600"}`}
                   />
                   {!collapsed && <span className="flex-1">{item.label}</span>}
                 </Link>

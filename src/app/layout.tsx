@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import HeaderNavBar from "@/components/ui/HeaderNavBar";
 import Sidebar from "@/components/ui/Siderbar";
@@ -14,16 +14,13 @@ type RootLayoutProps = {
 export default function RootLayout({ children }: RootLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const [collapsed, setCollapsed] = useState(false);
 
-  // Redirigir a /login si entra en "/"
   useEffect(() => {
-    if (pathname === "/") {
-      router.push("/login");
-    }
+    if (pathname === "/") router.push("/login");
   }, [pathname, router]);
 
   const isLogin = pathname.startsWith("/login");
-
   const session = "Usuario";
   const name = "Usuario";
 
@@ -37,14 +34,13 @@ export default function RootLayout({ children }: RootLayoutProps) {
               <HeaderNavBar session={session} name={name} />
             </div>
 
-            <div className="flex flex-1 pt-16">
-              {/* Sidebar fijo debajo del header */}
-              <div className="fixed top-16 left-0 h-[calc(100vh-4rem)] z-20">
-                <Sidebar />
-              </div>
+            {/* Contenedor Sidebar + Main */}
+            <div className="flex flex-1 pt-16 h-[calc(100vh-4rem)]">
+              {/* Sidebar ahora no es fixed */}
+              <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} />
 
-              {/* Contenido principal */}
-              <main className="flex-1 ml-56 p-4 overflow-auto h-[calc(100vh-4rem)]">
+              {/* Main se ajusta automáticamente al sidebar */}
+              <main className="flex-1 p-4 overflow-auto transition-all duration-300">
                 <Provider>{children}</Provider>
               </main>
             </div>

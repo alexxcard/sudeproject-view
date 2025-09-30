@@ -5,6 +5,7 @@ import { Dialog } from "primereact/dialog";
 import { InputText } from "primereact/inputtext";
 import { Dropdown } from "primereact/dropdown";
 import { Button } from "primereact/button";
+import { Calendar } from "primereact/calendar";
 import { NewProyecto } from "@/types";
 
 interface ProyectoFormProps {
@@ -17,6 +18,7 @@ export default function ProyectoForm({ visible, onHide, onSave }: ProyectoFormPr
   const [newProyecto, setNewProyecto] = useState<NewProyecto>({
     name: "",
     description: "",
+    propietario: "",
     status: "Activo",
     start_date: "",
     end_date: "",
@@ -27,6 +29,7 @@ export default function ProyectoForm({ visible, onHide, onSave }: ProyectoFormPr
     setNewProyecto({
       name: "",
       description: "",
+      propietario: "",
       status: "Activo",
       start_date: "",
       end_date: "",
@@ -47,21 +50,40 @@ export default function ProyectoForm({ visible, onHide, onSave }: ProyectoFormPr
           value={newProyecto.description}
           onChange={(e) => setNewProyecto({ ...newProyecto, description: e.target.value })}
         />
+        <InputText
+          placeholder="Propietario"
+          value={newProyecto.propietario}
+          onChange={(e) => setNewProyecto({ ...newProyecto, propietario: e.target.value })}
+        />
         <Dropdown
           value={newProyecto.status}
           options={["Activo", "Inactivo", "En Progreso"]}
           onChange={(e) => setNewProyecto({ ...newProyecto, status: e.value })}
           placeholder="Estado"
         />
-        <InputText
+        {/* Calendario para fecha inicio */}
+        <Calendar
           placeholder="Fecha inicio"
-          value={newProyecto.start_date}
-          onChange={(e) => setNewProyecto({ ...newProyecto, start_date: e.target.value })}
+          value={newProyecto.start_date ? new Date(newProyecto.start_date) : null}
+          onChange={(e) =>
+            setNewProyecto({
+              ...newProyecto,
+              start_date: e.value ? (e.value as Date).toISOString().split("T")[0] : "",
+            })
+          }
+          dateFormat="yy-mm-dd"
         />
-        <InputText
+        {/* Calendario para fecha fin */}
+        <Calendar
           placeholder="Fecha fin"
-          value={newProyecto.end_date}
-          onChange={(e) => setNewProyecto({ ...newProyecto, end_date: e.target.value })}
+          value={newProyecto.end_date ? new Date(newProyecto.end_date) : null}
+          onChange={(e) =>
+            setNewProyecto({
+              ...newProyecto,
+              end_date: e.value ? (e.value as Date).toISOString().split("T")[0] : "",
+            })
+          }
+          dateFormat="yy-mm-dd"
         />
       </div>
       <div className="flex gap-2 mt-3">

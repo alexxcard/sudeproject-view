@@ -37,17 +37,7 @@ export default function UsuarioForm({ visible, onHide, onSave }: UsuarioFormProp
   return (
     <Dialog header="Agregar Nuevo Usuario" visible={visible} onHide={onHide} modal>
       <div className="flex flex-col gap-3">
-        <InputText
-          placeholder="Username"
-          value={usuario.username}
-          onChange={(e) => setUsuario({ ...usuario, username: e.target.value })}
-        />
-        <InputText
-          placeholder="Password"
-          type="password"
-          value={usuario.password}
-          onChange={(e) => setUsuario({ ...usuario, password: e.target.value })}
-        />
+
         <InputText
           placeholder="Nombre"
           value={usuario.nombre}

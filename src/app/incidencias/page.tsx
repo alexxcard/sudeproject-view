@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Card } from "primereact/card";
 import { DataTable } from "primereact/datatable";
@@ -8,69 +8,102 @@ import { Column } from "primereact/column";
 import { Tag } from "primereact/tag";
 import { Dropdown } from "primereact/dropdown";
 import { Button } from "primereact/button";
-import { NewIncidencia, RowDataPriority, RowDataStatus } from "@/types";
 import IncidenForm from "@/components/features/IncidentForm";
+import { NewIncidencia, RowDataPriority, RowDataStatus } from "@/types";
 import { Incidencia } from "@/interface";
 
-// Datos de ejemplo
-const incidenciasMock: Incidencia[] = [
-  {
-    id: "1a2b3c",
-    title: "Error en login",
-    description: "Los usuarios no pueden iniciar sesión",
-    status: "Open",
-    priority: "High",
-    project: "Sistema Web",
-    reporter: "Juan Pérez",
-    assignee: "María Gómez",
-    created_at: "2025-09-18",
-    updated_at: "2025-09-18",
-  },
-  {
-    id: "4d5e6f",
-    title: "Problema con reportes",
-    description: "El PDF no se descarga",
-    status: "In Progress",
-    priority: "Medium",
-    project: "Gestor de Reportes",
-    reporter: "Luis Fernández",
-    assignee: "Pedro Torres",
-    created_at: "2025-09-17",
-    updated_at: "2025-09-18",
-  },
-];
-
 export default function IncidenciasPage() {
-  const [incidencias, setIncidencias] = useState<Incidencia[]>(incidenciasMock);
+  const [incidencias, setIncidencias] = useState<Incidencia[]>([]);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [priorityFilter, setPriorityFilter] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
 
-  /** 🔹 Eliminar incidencia */
-  const deleteIncidencia = (id: string) => {
-    setIncidencias(incidencias.filter((inc) => inc.id !== id));
+  // 🔹 Obtener incidencias desde backend
+  useEffect(() => {
+    const fetchIncidencias = async () => {
+      try {
+        const res = await fetch("http://localhost:8000/incidents/");
+        if (!res.ok) throw new Error(res.statusText);
+        const data = await res.json();
+
+        setIncidencias(
+          data.map((i: any) => ({
+            id: i.id,
+            title: i.title,
+            description: i.description,
+            status: i.status,
+            priority: i.priority,
+            project: i.project.name,
+            reporter: i.reporter.username,
+            assignee: i.assignee?.username || "",
+            created_at: i.created_at.split("T")[0],
+            updated_at: i.updated_at.split("T")[0],
+          }))
+        );
+      } catch (err) {
+        console.error("Error fetching incidencias:", err);
+      }
+    };
+
+    fetchIncidencias();
+  }, []);
+
+  // 🔹 Eliminar incidencia desde backend
+  const deleteIncidencia = async (id: string) => {
+    try {
+      const res = await fetch(`http://localhost:8000/incidents/${id}/`, { method: "DELETE" });
+      if (!res.ok) throw new Error(res.statusText);
+      setIncidencias((prev) => prev.filter((i) => i.id !== id));
+    } catch (err) {
+      console.error("Error eliminando incidencia:", err);
+    }
   };
 
-/** 🔹 Agregar incidencia */
-const addIncidencia = (data: NewIncidencia) => {
-  const nextId = (incidencias.length + 1).toString();
-  const newItem: Incidencia = {
-    id: nextId,
-    ...data,
-    created_at: new Date().toISOString().split("T")[0],
-    updated_at: new Date().toISOString().split("T")[0],
-  };
-  setIncidencias([newItem, ...incidencias]);
+  // 🔹 Crear nueva incidencia en backend
+const addIncidencia = async (data: NewIncidencia) => {
+  try {
+    const res = await fetch("http://localhost:8000/incidents/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...data,
+        // mapear los campos correctos según tu backend Django
+        project: data.project,   // aquí va el ID o nombre que espera Django
+        reporter: data.reporter, // aquí va el ID del usuario reportero
+      }),
+    });
+
+    if (!res.ok) throw new Error(res.statusText);
+    const newIncident = await res.json();
+
+    setIncidencias((prev) => [
+      {
+        id: newIncident.id,
+        title: newIncident.title,
+        description: newIncident.description,
+        status: newIncident.status,
+        priority: newIncident.priority,
+        project: newIncident.project.name,
+        reporter: newIncident.reporter.username,
+        assignee: newIncident.assignee?.username || "",
+        created_at: newIncident.created_at.split("T")[0],
+        updated_at: newIncident.updated_at.split("T")[0],
+      },
+      ...prev,
+    ]);
+  } catch (err) {
+    console.error("Error creando incidencia:", err);
+  }
 };
 
-  /** 🔹 Filtrar incidencias */
+  // 🔹 Filtrado de incidencias
   const filteredIncidencias = incidencias.filter(
     (i) =>
       (!statusFilter || i.status === statusFilter) &&
       (!priorityFilter || i.priority === priorityFilter)
   );
 
-  /** 🔹 Render estado */
+  // 🔹 Templates para estado y prioridad
   const statusTemplate = (rowData: RowDataStatus) => {
     const severity =
       rowData.status === "Open"
@@ -81,7 +114,6 @@ const addIncidencia = (data: NewIncidencia) => {
     return <Tag value={rowData.status} severity={severity} />;
   };
 
-  /** 🔹 Render prioridad */
   const priorityTemplate = (rowData: RowDataPriority) => {
     const severity =
       rowData.priority === "Critical"
