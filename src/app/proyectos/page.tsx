@@ -11,26 +11,64 @@ import { Proyecto } from "@/interface";
 import { NewProyecto } from "@/types";
 import ProyectoForm from "@/components/features/ProyectForm";
 
+interface User {
+  id: string;
+  username: string;
+}
+
+interface ProyectoConNombres extends Proyecto {
+  ownerName: string;
+  membersNames: string;
+}
+
 export default function ProyectosPage() {
   const [proyectos, setProyectos] = useState<Proyecto[]>([]);
+  const [usuarios, setUsuarios] = useState<User[]>([]);
+  const [proyectosConNombres, setProyectosConNombres] = useState<ProyectoConNombres[]>([]);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
 
-  // Cargar proyectos desde el backend
+  // Cargar usuarios
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/api/projects/")
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setProyectos(data);
-        } else if (data.results) {
-          setProyectos(data.results);
-        }
-      })
-      .catch((err) => console.error("Error cargando proyectos:", err));
+    fetch("http://127.0.0.1:8000/api/users/")
+      .then(res => res.json())
+      .then(data => setUsuarios(data))
+      .catch(err => console.error("Error cargando usuarios:", err));
   }, []);
 
-  // Guardar nuevo proyecto
+  // Cargar proyectos
+  useEffect(() => {
+    fetch("http://127.0.0.1:8000/api/projects/")
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) setProyectos(data);
+        else if (data.results) setProyectos(data.results);
+      })
+      .catch(err => console.error("Error cargando proyectos:", err));
+  }, []);
+
+  // Mapear IDs a nombres cuando ambos datos están listos
+  useEffect(() => {
+    if (usuarios.length === 0 || proyectos.length === 0) return;
+
+    const mapProyectos: ProyectoConNombres[] = proyectos.map(p => {
+      const owner = usuarios.find(u => u.id === p.owner);
+      const membersNames = p.members
+        ? p.members
+            .map((memberId: string) => usuarios.find(u => u.id === memberId)?.username || "Desconocido")
+            .join(", ")
+        : "Sin miembros";
+
+      return {
+        ...p,
+        ownerName: owner ? owner.username : "Desconocido",
+        membersNames,
+      };
+    });
+
+    setProyectosConNombres(mapProyectos);
+  }, [usuarios, proyectos]);
+
   const addProyecto = async (data: NewProyecto) => {
     try {
       const res = await fetch("http://127.0.0.1:8000/api/projects/", {
@@ -38,19 +76,19 @@ export default function ProyectosPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-
       if (!res.ok) throw new Error("Error al crear proyecto");
-
       const nuevo = await res.json();
-      setProyectos((prev) => [nuevo, ...prev]);
+      setProyectos(prev => [nuevo, ...prev]);
     } catch (err) {
       console.error(err);
     }
   };
 
-  const filteredProyectos = proyectos.filter(
-    (p) => !statusFilter || p.status === statusFilter
+  const filteredProyectos = proyectosConNombres.filter(
+    p => !statusFilter || p.status === statusFilter
   );
+
+  if (usuarios.length === 0 || proyectos.length === 0) return <div>Cargando datos...</div>;
 
   return (
     <div className="bg-gray-100 min-h-screen p-6">
@@ -92,7 +130,8 @@ export default function ProyectosPage() {
         >
           <Column field="name" header="Nombre" />
           <Column field="description" header="Descripción" />
-          <Column field="owner" header="Propietario" />
+          <Column header="Propietario" body={(row) => row.ownerName} />
+          <Column header="Miembros" body={(row) => row.membersNames} />
           <Column field="created_at" header="Creado" />
         </DataTable>
       </Card>

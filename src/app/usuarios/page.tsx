@@ -7,14 +7,11 @@ import { Column } from "primereact/column";
 import { Button } from "primereact/button";
 import { Tag } from "primereact/tag";
 import { Dropdown } from "primereact/dropdown";
-import UsuarioForm from "@/components/features/UserForm";
-import { NewUsuario } from "@/types";
 import { Usuario } from "@/interface";
 
 export default function UsuariosPage() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [estadoFilter, setEstadoFilter] = useState<string | null>(null);
-  const [showForm, setShowForm] = useState(false);
 
   // 🟢 Obtener el token del localStorage
   // const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
@@ -63,43 +60,11 @@ export default function UsuariosPage() {
     }
   };
 
-  // Crear usuario
-const addUsuario = async (data: NewUsuario) => {
-  try {
-    console.log("Enviando al backend:", data);
-
-    const res = await fetch("http://127.0.0.1:8000/api/users/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        // descomenta si usas JWT
-        // "Authorization": `Bearer ${localStorage.getItem("access")}`,
-      },
-      body: JSON.stringify(data),
-    });
-
-    if (res.ok) {
-      const newUser = await res.json();
-      setUsuarios([newUser, ...usuarios]);
-      setShowForm(false);
-    } else {
-      const text = await res.text(); // <-- en vez de json()
-      console.error("Error al crear usuario:", text);
-    }
-  } catch (err) {
-    console.error("Error al crear usuario:", err);
-  }
-};
   return (
     <div className="bg-gray-100 min-h-screen p-6">
       <Card className="max-w-[1200px] mx-auto shadow-md">
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-xl font-bold">Listado de Usuarios</h1>
-          <Button
-            label="Nuevo Usuario"
-            icon="pi pi-plus"
-            onClick={() => setShowForm(true)}
-          />
         </div>
 
         {/* Filtros */}
@@ -148,12 +113,6 @@ const addUsuario = async (data: NewUsuario) => {
           />
         </DataTable>
       </Card>
-
-      <UsuarioForm
-        visible={showForm}
-        onHide={() => setShowForm(false)}
-        onSave={addUsuario}
-      />
     </div>
   );
 }

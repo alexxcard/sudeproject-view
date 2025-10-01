@@ -35,11 +35,10 @@ export interface Proyecto {
   id: string;
   name: string;
   description: string;
-  status: string;
-  start_date: string;
-  end_date: string;
   created_at: string;
-  updated_at: string;
+  owner: string;         // id del propietario
+  members: string[];     // array de ids de miembros
+  status?: string;
 }
 
 
@@ -54,12 +53,16 @@ export interface Usuario {
   updated_at: string;
 }
 
-export interface Tarea {
+interface TareaBackend {
   id: string;
   title: string;
-  description: string;
-  status: string;
-  priority: string;
-  assignee: string;
-  due_date: string;
+  description?: string;
+  status: "Pending" | "InProgress" | "InReview" | "Done";
+  priority: "Low" | "Medium" | "High";
+  project?: { name: string } | null;
+  assignee?: { username: string } | null;
+  due_date?: string | null;
+  created_at: string;
+  updated_at: string;
 }
+

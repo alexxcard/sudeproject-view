@@ -7,14 +7,13 @@ import { Column } from "primereact/column";
 import { Button } from "primereact/button";
 import { Tag } from "primereact/tag";
 import { Dialog } from "primereact/dialog";
-import { Tarea } from "@/interface"; // Ajusta tu interfaz
+import { TareaBackend } from "@/interface"; // Ajusta tu interfaz
 import TareaForm from "@/components/features/TareasForm";
-import { apiGet } from "../services/api";
 
-const API_URL = "http://localhost:8000/api/tasks/"; // URL de tu backend Django
+const API_URL = "http://localhost:8000/api/tasks/";
 
 export default function TareasPage() {
-  const [tareas, setTareas] = useState<Tarea[]>([]);
+  const [tareas, setTareas] = useState<TareaBackend[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
 
@@ -22,12 +21,13 @@ export default function TareasPage() {
   useEffect(() => {
     const fetchTareas = async () => {
       try {
-        const res = await apiGet(API_URL);
+        const res = await fetch(API_URL);
         if (!res.ok) throw new Error(res.statusText);
-        const data = await res.json();
+
+        const data: TareaBackend[] = await res.json();
 
         // Mapear datos al frontend
-        const mapped: Tarea[] = data.map((t: any) => ({
+        const mapped: TareaBackend[] = data.map((t) => ({
           id: t.id,
           title: t.title,
           description: t.description || "",
@@ -52,7 +52,7 @@ export default function TareasPage() {
   }, []);
 
   // 🔹 Crear nueva tarea
-  const addTarea = async (nuevaTarea: Tarea) => {
+  const addTarea = async (nuevaTarea: TareaBackend) => {
     try {
       const res = await fetch(API_URL, {
         method: "POST",
@@ -66,7 +66,7 @@ export default function TareasPage() {
         return;
       }
 
-      const tareaCreada = await res.json();
+      const tareaCreada: TareaBackend = await res.json();
       setTareas([tareaCreada, ...tareas]);
       setShowForm(false);
     } catch (err) {
@@ -111,32 +111,53 @@ export default function TareasPage() {
             stripedRows
             responsiveLayout="scroll"
           >
-            <Column field="id" header="ID" />
             <Column field="title" header="Título" />
             <Column field="description" header="Descripción" />
+
+            {/* Columna de Estado con colores */}
             <Column
               field="status"
               header="Estado"
-              body={(rowData) => (
-                <Tag
-                  value={rowData.status}
-                  severity={
-                    rowData.status === "Open"
-                      ? "info"
-                      : rowData.status === "In Progress"
-                      ? "warning"
-                      : "success"
-                  }
-                />
-              )}
+              body={(rowData: TareaBackend) => {
+                let severity: "info" | "warning" | "success" | "danger" | "secondary" | "contrast" = "info";
+                let displayStatus = rowData.status;
+
+                switch (rowData.status) {
+                  case "Pending":
+                    severity = "info";
+                    displayStatus = "Pendiente";
+                    break;
+                  case "InProgress":
+                    severity = "warning";
+                    displayStatus = "En progreso";
+                    break;
+                  case "InReview":
+                    severity = "secondary";
+                    displayStatus = "En revisión";
+                    break;
+                  case "Done":
+                    severity = "success";
+                    displayStatus = "Completada";
+                    break;
+                  default:
+                    severity = "info";
+                    displayStatus = rowData.status;
+                }
+
+                return <Tag value={displayStatus} severity={severity} />;
+              }}
             />
+
             <Column field="priority" header="Prioridad" />
             <Column field="project" header="Proyecto" />
             <Column field="assignee" header="Asignado a" />
+            <Column field="created_at" header="Fecha creación" />
             <Column field="due_date" header="Fecha límite" />
+
+            {/* Botón eliminar */}
             <Column
               header="Eliminar"
-              body={(rowData) => (
+              body={(rowData: TareaBackend) => (
                 <Button
                   icon="pi pi-trash"
                   className="p-button-danger p-button-sm"

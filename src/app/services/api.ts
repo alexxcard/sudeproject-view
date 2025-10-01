@@ -4,7 +4,7 @@ import axios from "axios";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000",
+  baseURL: API_URL,
   headers: { "Content-Type": "application/json" },
 });
 
@@ -18,8 +18,12 @@ export async function loginUser(username: string, password: string) {
     localStorage.setItem("refreshToken", response.data.refresh);
 
     return response.data; // { access, refresh }
-  } catch (error: any) {
-    throw error.response?.data || { detail: "Error al iniciar sesión" };
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      throw error.response?.data || { detail: "Error al iniciar sesión" };
+    } else {
+      throw { detail: "Error inesperado al iniciar sesión" };
+    }
   }
 }
 
@@ -34,8 +38,12 @@ export async function registerUser(values: {
   try {
     const response = await api.post("/api/users/", values);
     return response.data;
-  } catch (error: any) {
-    throw error.response?.data || { detail: "Error al crear usuario" };
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      throw error.response?.data || { detail: "Error al crear usuario" };
+    } else {
+      throw { detail: "Error inesperado al crear usuario" };
+    }
   }
 }
 
@@ -48,8 +56,12 @@ export async function refreshToken() {
     const response = await api.post("/api/auth/token/refresh/", { refresh });
     localStorage.setItem("accessToken", response.data.access);
     return response.data.access;
-  } catch (error: any) {
-    throw error.response?.data || { detail: "Error al refrescar token" };
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      throw error.response?.data || { detail: "Error al refrescar token" };
+    } else {
+      throw { detail: "Error inesperado al refrescar token" };
+    }
   }
 }
 
@@ -59,15 +71,31 @@ export async function apiGet(path: string) {
   const token = localStorage.getItem("next-auth.session-token");
   if (!token) throw new Error("Usuario no autenticado");
 
-  const response = await api.get(path, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return response.data;
+  try {
+    const response = await api.get(path, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      throw error.response?.data || { detail: "Error en la petición protegida" };
+    } else {
+      throw { detail: "Error inesperado en la petición protegida" };
+    }
+  }
 }
 
 export async function getIncidents(token: string) {
-  const res = await api.get("/api/incidents/", {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return res.data;
+  try {
+    const res = await api.get("/api/incidents/", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.data;
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      throw error.response?.data || { detail: "Error al obtener incidencias" };
+    } else {
+      throw { detail: "Error inesperado al obtener incidencias" };
+    }
+  }
 }
