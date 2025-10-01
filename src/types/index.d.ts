@@ -10,6 +10,7 @@ export type RowDataPriority = {
 export type RowDataStatus = {
   status: "Open" | "Assigned" | "Resolved" | "Closed";
 };
+
 // src/types/index.ts
 import { Incidencia } from "@/interface";
 

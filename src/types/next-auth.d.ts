@@ -11,8 +11,11 @@ declare module "next-auth" {
   interface User extends DefaultUser {
     access: string;
     refresh: string;
+    accessTokenExpires: number;
   }
+}
 
+declare module "next-auth/jwt" {
   interface JWT {
     access: string;
     refresh: string;

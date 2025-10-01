@@ -38,7 +38,11 @@ const fetchIncidencias = async () => {
       },
     });
 
-    if (!res.ok) throw new Error("Error fetching incidencias");
+   if (!res.ok) {
+  const text = await res.text();
+  console.error("Error al obtener incidencias:", res.status, text);
+  throw new Error(text);
+}
     const data = await res.json();
     setIncidencias(
       data.map((i: any) => ({
