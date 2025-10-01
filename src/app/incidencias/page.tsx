@@ -10,48 +10,67 @@ import { Dropdown } from "primereact/dropdown";
 import { Button } from "primereact/button";
 import IncidenForm from "@/components/features/IncidentForm";
 import { NewIncidencia, RowDataPriority, RowDataStatus } from "@/types";
-import { Incidencia } from "@/interface";
+import { getSession } from "next-auth/react";
+import { getIncidents } from "@/app/services/api";
+
+const API_URL = "http://localhost:8000/api/incidents/";
 
 export default function IncidenciasPage() {
-  const [incidencias, setIncidencias] = useState<Incidencia[]>([]);
-  const [statusFilter, setStatusFilter] = useState<string | null>(null);
-  const [priorityFilter, setPriorityFilter] = useState<string | null>(null);
+  const [incidencias, setIncidencias] = useState<NewIncidencia[]>([]);
+  const [statusFilter, setStatusFilter] = useState<"Open" | "Assigned" | "Resolved" | "Closed" | null>(null);
+  const [priorityFilter, setPriorityFilter] = useState<"High" | "Medium" | "Low" | null>(null);
   const [showForm, setShowForm] = useState(false);
 
-  // 🔹 Obtener incidencias desde backend
-  useEffect(() => {
-    const fetchIncidencias = async () => {
-      try {
-        const res = await fetch("http://localhost:8000/incidents/");
-        if (!res.ok) throw new Error(res.statusText);
-        const data = await res.json();
+  // -------------------- Obtener incidencias --------------------
+useEffect(() => {
+const fetchIncidencias = async () => {
+  const session = await getSession();
+  if (!session) {
+    console.error("No hay sesión activa");
+    return;
+  }
 
-        setIncidencias(
-          data.map((i: any) => ({
-            id: i.id,
-            title: i.title,
-            description: i.description,
-            status: i.status,
-            priority: i.priority,
-            project: i.project.name,
-            reporter: i.reporter.username,
-            assignee: i.assignee?.username || "",
-            created_at: i.created_at.split("T")[0],
-            updated_at: i.updated_at.split("T")[0],
-          }))
-        );
-      } catch (err) {
-        console.error("Error fetching incidencias:", err);
-      }
-    };
+  try {
+    const res = await fetch("http://localhost:8000/api/incidents/", {
+      headers: {
+        "Authorization": `Bearer ${session.user.access}`,
+        "Content-Type": "application/json",
+      },
+    });
 
-    fetchIncidencias();
-  }, []);
+    if (!res.ok) throw new Error("Error fetching incidencias");
+    const data = await res.json();
+    setIncidencias(
+      data.map((i: any) => ({
+        id: i.id,
+        title: i.title,
+        description: i.description,
+        status: i.status,
+        priority: i.priority,
+        project: i.project.name,
+        reporter: i.reporter.username,
+        assignee: i.assignee?.username || "",
+        created_at: i.created_at.split("T")[0],
+        updated_at: i.updated_at.split("T")[0],
+      }))
+    );
+  } catch (err) {
+    console.error(err);
+  }
+};
 
-  // 🔹 Eliminar incidencia desde backend
+  fetchIncidencias();
+}, []);
+
+  // -------------------- Eliminar incidencia --------------------
   const deleteIncidencia = async (id: string) => {
     try {
-      const res = await fetch(`http://localhost:8000/incidents/${id}/`, { method: "DELETE" });
+      const res = await fetch(`${API_URL}${id}/`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
+        },
+      });
       if (!res.ok) throw new Error(res.statusText);
       setIncidencias((prev) => prev.filter((i) => i.id !== id));
     } catch (err) {
@@ -59,77 +78,82 @@ export default function IncidenciasPage() {
     }
   };
 
-  // 🔹 Crear nueva incidencia en backend
-const addIncidencia = async (data: NewIncidencia) => {
-  try {
-    const res = await fetch("http://localhost:8000/incidents/", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...data,
-        // mapear los campos correctos según tu backend Django
-        project: data.project,   // aquí va el ID o nombre que espera Django
-        reporter: data.reporter, // aquí va el ID del usuario reportero
-      }),
-    });
+  // -------------------- Crear nueva incidencia --------------------
+  const addIncidencia = async (data: NewIncidencia) => {
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
+        },
+        body: JSON.stringify({
+          title: data.title,
+          description: data.description,
+          status: data.status,
+          priority: data.priority,
+          project: data.project_id,
+          reporter: data.reporter_id,
+          assignee: data.assignee_id || null,
+        }),
+      });
 
-    if (!res.ok) throw new Error(res.statusText);
-    const newIncident = await res.json();
+      if (!res.ok) throw new Error(res.statusText);
+      const newIncident = await res.json();
 
-    setIncidencias((prev) => [
-      {
-        id: newIncident.id,
-        title: newIncident.title,
-        description: newIncident.description,
-        status: newIncident.status,
-        priority: newIncident.priority,
-        project: newIncident.project.name,
-        reporter: newIncident.reporter.username,
-        assignee: newIncident.assignee?.username || "",
-        created_at: newIncident.created_at.split("T")[0],
-        updated_at: newIncident.updated_at.split("T")[0],
-      },
-      ...prev,
-    ]);
-  } catch (err) {
-    console.error("Error creando incidencia:", err);
-  }
-};
+      setIncidencias((prev) => [
+        {
+          id: newIncident.id,
+          title: newIncident.title,
+          description: newIncident.description,
+          status: newIncident.status as RowDataStatus["status"],
+          priority: newIncident.priority as RowDataPriority["priority"],
+          project: newIncident.project.name,
+          reporter: newIncident.reporter.username,
+          assignee: newIncident.assignee?.username || "",
+          created_at: newIncident.created_at.split("T")[0],
+          updated_at: newIncident.updated_at.split("T")[0],
+        },
+        ...prev,
+      ]);
+    } catch (err) {
+      console.error("Error creando incidencia:", err);
+    }
+  };
 
-  // 🔹 Filtrado de incidencias
+  // -------------------- Filtrado --------------------
   const filteredIncidencias = incidencias.filter(
     (i) =>
       (!statusFilter || i.status === statusFilter) &&
       (!priorityFilter || i.priority === priorityFilter)
   );
 
-  // 🔹 Templates para estado y prioridad
+  // -------------------- Templates --------------------
   const statusTemplate = (rowData: RowDataStatus) => {
     const severity =
       rowData.status === "Open"
         ? "warning"
-        : rowData.status === "In Progress"
+        : rowData.status === "Assigned"
         ? "info"
-        : "success";
+        : rowData.status === "Resolved"
+        ? "success"
+        : "danger"; // Closed
     return <Tag value={rowData.status} severity={severity} />;
   };
 
   const priorityTemplate = (rowData: RowDataPriority) => {
     const severity =
-      rowData.priority === "Critical"
+      rowData.priority === "High"
         ? "danger"
-        : rowData.priority === "High"
-        ? "warning"
         : rowData.priority === "Medium"
-        ? "info"
-        : "success";
+        ? "warning"
+        : "info"; // Low
     return <Tag value={rowData.priority} severity={severity} />;
   };
 
   return (
     <div className="bg-[#f0f4f8] min-h-screen p-6">
       <Card className="shadow-md mb-4">
-        {/* Header */}
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-xl font-bold">Listado de Incidencias</h1>
           <div className="flex gap-2">
@@ -144,18 +168,17 @@ const addIncidencia = async (data: NewIncidencia) => {
           </div>
         </div>
 
-        {/* Filtros */}
         <div className="flex flex-wrap gap-3 mb-4">
           <Dropdown
             value={statusFilter}
-            options={["Open", "In Progress", "Closed"]}
+            options={["Open", "Assigned", "Resolved", "Closed"]}
             onChange={(e) => setStatusFilter(e.value)}
             placeholder="Filtrar por estado"
             showClear
           />
           <Dropdown
             value={priorityFilter}
-            options={["Critical", "High", "Medium", "Low"]}
+            options={["High", "Medium", "Low"]}
             onChange={(e) => setPriorityFilter(e.value)}
             placeholder="Filtrar por prioridad"
             showClear
@@ -169,7 +192,6 @@ const addIncidencia = async (data: NewIncidencia) => {
           />
         </div>
 
-        {/* Tabla */}
         <DataTable
           value={filteredIncidencias}
           paginator
@@ -189,7 +211,7 @@ const addIncidencia = async (data: NewIncidencia) => {
           <Column field="updated_at" header="Actualizado" />
           <Column
             header="Accion"
-            body={(rowData: Incidencia) => (
+            body={(rowData: NewIncidencia) => (
               <Button
                 icon="pi pi-trash"
                 className="p-button-danger p-button-sm"
@@ -200,7 +222,6 @@ const addIncidencia = async (data: NewIncidencia) => {
         </DataTable>
       </Card>
 
-      {/* Modal del formulario */}
       <IncidenForm
         visible={showForm}
         onHide={() => setShowForm(false)}

@@ -18,18 +18,17 @@ export interface TableProps<T> {
 }
 
 // src/interface/index.ts
-export interface Incidencia {
-  id: string;
+export interface NewIncidencia {
   title: string;
   description: string;
-  status: string;
-  priority: string;
-  project: string;
-  reporter: string;
-  assignee: string;
-  created_at: string;
-  updated_at: string;
+  status: "Open" | "Assigned" | "Resolved" | "Closed";
+  priority: "High" | "Medium" | "Low";
+  project_id: string;   // ID del proyecto
+  reporter_id: string;  // ID del usuario que reporta
+  assignee_id?: string | null; // ID del usuario asignado
 }
+
+
 
 // src/interface/proyecto.ts
 export interface Proyecto {
@@ -42,6 +41,7 @@ export interface Proyecto {
   created_at: string;
   updated_at: string;
 }
+
 
 
 export interface Usuario {

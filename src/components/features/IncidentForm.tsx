@@ -1,40 +1,88 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog } from "primereact/dialog";
 import { InputText } from "primereact/inputtext";
 import { InputTextarea } from "primereact/inputtextarea";
 import { Dropdown } from "primereact/dropdown";
 import { Button } from "primereact/button";
-import { NewIncidencia } from "@/types";
+import { NewIncidencia } from "@/interface";
+
+// Interfaces para dropdown
+interface UsuarioOption {
+  id: string;
+  nombre: string;
+}
+
+interface ProyectoOption {
+  id: string;
+  name: string;
+}
 
 export interface IncidenFormProps {
   visible: boolean;
   onHide: () => void;
   onSave: (data: NewIncidencia) => void;
 }
+
 export default function IncidenForm({ visible, onHide, onSave }: IncidenFormProps) {
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<NewIncidencia>({
     title: "",
     description: "",
     status: "Open",
     priority: "Low",
-    project: "",
-    reporter: "",
-    assignee: "",
+    project_id: "",
+    reporter_id: "",
+    assignee_id: null,
   });
 
+  const [proyectos, setProyectos] = useState<ProyectoOption[]>([]);
+  const [usuarios, setUsuarios] = useState<UsuarioOption[]>([]);
+
+  // 🔹 Cargar proyectos y usuarios desde backend
+  useEffect(() => {
+    const fetchProyectos = async () => {
+      try {
+        const res = await fetch("http://localhost:8000/projects/");
+        const data = await res.json();
+        setProyectos(data.map((p: any) => ({ id: p.id, name: p.name })));
+      } catch (err) {
+        console.error("Error fetching proyectos:", err);
+      }
+    };
+
+    const fetchUsuarios = async () => {
+      try {
+        const res = await fetch("http://localhost:8000/users/");
+        const data = await res.json();
+        setUsuarios(data.map((u: any) => ({ id: u.id, nombre: u.nombre })));
+      } catch (err) {
+        console.error("Error fetching usuarios:", err);
+      }
+    };
+
+    fetchProyectos();
+    fetchUsuarios();
+  }, []);
+
   const handleSave = () => {
+    if (!form.title || !form.project_id || !form.reporter_id) {
+      alert("Título, proyecto y reportero son obligatorios");
+      return;
+    }
+
     onSave(form);
+
     setForm({
       title: "",
       description: "",
       status: "Open",
       priority: "Low",
-      project: "",
-      reporter: "",
-      assignee: "",
+      project_id: "",
+      reporter_id: "",
+      assignee_id: null,
     });
+
     onHide();
   };
 
@@ -52,33 +100,46 @@ export default function IncidenForm({ visible, onHide, onSave }: IncidenFormProp
           value={form.title}
           onChange={(e) => setForm({ ...form, title: e.target.value })}
         />
-        <InputText
-          placeholder="Proyecto"
-          value={form.project}
-          onChange={(e) => setForm({ ...form, project: e.target.value })}
+
+        <Dropdown
+          value={form.project_id}
+          options={proyectos}
+          onChange={(e) => setForm({ ...form, project_id: e.value })}
+          optionLabel="name"
+          placeholder="Selecciona un proyecto"
         />
-        <InputText
-          placeholder="Reportado por"
-          value={form.reporter}
-          onChange={(e) => setForm({ ...form, reporter: e.target.value })}
+
+        <Dropdown
+          value={form.reporter_id}
+          options={usuarios}
+          onChange={(e) => setForm({ ...form, reporter_id: e.value })}
+          optionLabel="nombre"
+          placeholder="Selecciona reportero"
         />
-        <InputText
-          placeholder="Asignado a"
-          value={form.assignee}
-          onChange={(e) => setForm({ ...form, assignee: e.target.value })}
+
+        <Dropdown
+          value={form.assignee_id}
+          options={usuarios}
+          onChange={(e) => setForm({ ...form, assignee_id: e.value })}
+          optionLabel="nombre"
+          placeholder="Asignar a (opcional)"
+          showClear
         />
+
         <Dropdown
           value={form.status}
-          options={["Open", "In Progress", "Closed"]}
+          options={["Open", "Assigned", "Resolved", "Closed"]}
           onChange={(e) => setForm({ ...form, status: e.value })}
           placeholder="Estado"
         />
+
         <Dropdown
           value={form.priority}
-          options={["Critical", "High", "Medium", "Low"]}
+          options={["High", "Medium", "Low"]}
           onChange={(e) => setForm({ ...form, priority: e.value })}
           placeholder="Prioridad"
         />
+
         <InputTextarea
           value={form.description}
           onChange={(e) => setForm({ ...form, description: e.target.value })}

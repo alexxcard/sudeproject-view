@@ -10,57 +10,79 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        const res = await fetch("http://localhost:8000/api/auth/token/", {
-          method: "POST",
-          body: JSON.stringify(credentials),
-          headers: { "Content-Type": "application/json" },
-        });
+  try {
+    const res = await fetch("http://127.0.0.1:8000/api/auth/token/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        username: credentials?.username,
+        password: credentials?.password,
+      }),
+    });
 
-        const user = await res.json();
+    const user = await res.json();
 
-        if (res.ok && user?.access) {
-          return {
-            ...user,
-            accessTokenExpires: Date.now() + 60 * 1000, // 1 min
-          };
-        }
-        return null;
-      },
+    if (res.ok && user?.access) {
+      return {
+        id: "1", // 👈 obligatorio por el tipo User
+        access: user.access,
+        refresh: user.refresh,
+        accessTokenExpires: Date.now() + 60 * 1000,
+      };
+    }
+
+    return null;
+  } catch (error) {
+    console.error("Error en authorize:", error);
+    return null;
+  }
+}
     }),
   ],
+
   session: {
     strategy: "jwt",
     maxAge: 60 * 60, // 1 hora
   },
+
   pages: {
     signIn: "/login",
   },
+
   callbacks: {
     async jwt({ token, user }) {
+      // 🔹 Primer login: guardar tokens en el JWT
       if (user) {
         return {
+          ...token,
           access: user.access,
           refresh: user.refresh,
-          accessTokenExpires: Date.now() + 60 * 1000,
+          accessTokenExpires: Date.now() + 60 * 1000, // 1 min
         };
       }
 
+      // 🔹 Token aún válido
       if (Date.now() < (token.accessTokenExpires as number)) {
         return token;
       }
 
+      // 🔹 Refrescar el token
       return await refreshAccessToken(token);
     },
+
     async session({ session, token }) {
+      // Guardamos access y refresh dentro de session.user
       session.user = {
         access: token.access,
         refresh: token.refresh,
       } as any;
+
       return session;
     },
   },
 };
 
+// -------------------- REFRESH TOKEN --------------------
 async function refreshAccessToken(token: any) {
   try {
     const res = await fetch("http://127.0.0.1:8000/api/auth/token/refresh/", {
@@ -71,15 +93,13 @@ async function refreshAccessToken(token: any) {
 
     const refreshedTokens = await res.json();
 
-    if (!res.ok) {
-      throw refreshedTokens;
-    }
+    if (!res.ok) throw refreshedTokens;
 
     return {
       ...token,
       access: refreshedTokens.access,
       accessTokenExpires: Date.now() + 60 * 1000,
-      refresh: refreshedTokens.refresh ?? token.refresh,
+      refresh: token.refresh, // Django no devuelve refresh nuevo
     };
   } catch (error) {
     console.error("Error refreshing access token", error);

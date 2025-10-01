@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog } from "primereact/dialog";
 import { InputText } from "primereact/inputtext";
 import { Dropdown } from "primereact/dropdown";
 import { Button } from "primereact/button";
-import { Calendar } from "primereact/calendar";
 import { NewProyecto } from "@/types";
 
 interface ProyectoFormProps {
@@ -14,25 +13,38 @@ interface ProyectoFormProps {
   onSave: (data: NewProyecto) => void;
 }
 
+interface UserOption {
+  id: string;
+  username: string;
+}
+
 export default function ProyectoForm({ visible, onHide, onSave }: ProyectoFormProps) {
   const [newProyecto, setNewProyecto] = useState<NewProyecto>({
     name: "",
     description: "",
-    propietario: "",
-    status: "Activo",
-    start_date: "",
-    end_date: "",
+    owner: "", // Aquí guardamos el id del usuario
   });
+
+  const [users, setUsers] = useState<UserOption[]>([]);
+
+  // Cargar usuarios del backend
+  useEffect(() => {
+    fetch("http://127.0.0.1:8000/api/users/")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setUsers(data);
+        }
+      })
+      .catch((err) => console.error("Error cargando usuarios:", err));
+  }, []);
 
   const handleSave = () => {
     onSave(newProyecto);
     setNewProyecto({
       name: "",
       description: "",
-      propietario: "",
-      status: "Activo",
-      start_date: "",
-      end_date: "",
+      owner: "",
     });
     onHide();
   };
@@ -50,40 +62,11 @@ export default function ProyectoForm({ visible, onHide, onSave }: ProyectoFormPr
           value={newProyecto.description}
           onChange={(e) => setNewProyecto({ ...newProyecto, description: e.target.value })}
         />
-        <InputText
-          placeholder="Propietario"
-          value={newProyecto.propietario}
-          onChange={(e) => setNewProyecto({ ...newProyecto, propietario: e.target.value })}
-        />
         <Dropdown
-          value={newProyecto.status}
-          options={["Activo", "Inactivo", "En Progreso"]}
-          onChange={(e) => setNewProyecto({ ...newProyecto, status: e.value })}
-          placeholder="Estado"
-        />
-        {/* Calendario para fecha inicio */}
-        <Calendar
-          placeholder="Fecha inicio"
-          value={newProyecto.start_date ? new Date(newProyecto.start_date) : null}
-          onChange={(e) =>
-            setNewProyecto({
-              ...newProyecto,
-              start_date: e.value ? (e.value as Date).toISOString().split("T")[0] : "",
-            })
-          }
-          dateFormat="yy-mm-dd"
-        />
-        {/* Calendario para fecha fin */}
-        <Calendar
-          placeholder="Fecha fin"
-          value={newProyecto.end_date ? new Date(newProyecto.end_date) : null}
-          onChange={(e) =>
-            setNewProyecto({
-              ...newProyecto,
-              end_date: e.value ? (e.value as Date).toISOString().split("T")[0] : "",
-            })
-          }
-          dateFormat="yy-mm-dd"
+          value={newProyecto.owner}
+          options={users.map((u) => ({ label: u.username, value: u.id }))}
+          onChange={(e) => setNewProyecto({ ...newProyecto, owner: e.value })}
+          placeholder="Seleccionar propietario"
         />
       </div>
       <div className="flex gap-2 mt-3">

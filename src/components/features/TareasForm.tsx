@@ -1,26 +1,68 @@
 "use client";
-import { Tarea } from "@/interface";
-import { useState, ChangeEvent, FormEvent } from "react";
 
+import { useState, useEffect, ChangeEvent, FormEvent } from "react";
+
+interface UserOption {
+  id: string;
+  username: string;
+}
+
+interface ProjectOption {
+  id: string;
+  name: string;
+}
 
 interface TareaFormProps {
-  tarea?: Tarea;
-  onSubmit: (tarea: Tarea) => void;
+  tarea?: any; // opcional para editar
+  onSubmit: (tarea: any) => void;
   onCancel?: () => void;
 }
 
 export default function TareaForm({ tarea, onSubmit, onCancel }: TareaFormProps) {
-  const [formData, setFormData] = useState<Tarea>({
-    id: tarea?.id || "",
+  const [formData, setFormData] = useState<any>({
     title: tarea?.title || "",
     description: tarea?.description || "",
-    status: tarea?.status || "Open",
+    status: tarea?.status || "Pending",
     priority: tarea?.priority || "Medium",
+    project: tarea?.project || "",
     assignee: tarea?.assignee || "",
     due_date: tarea?.due_date || "",
   });
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const [users, setUsers] = useState<UserOption[]>([]);
+  const [projects, setProjects] = useState<ProjectOption[]>([]);
+
+  // Cargar usuarios y proyectos
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const res = await fetch("http://localhost:8000/api/users/");
+        if (!res.ok) throw new Error(res.statusText);
+        const data = await res.json();
+        setUsers(data.map((u: any) => ({ id: u.id, username: u.username })));
+      } catch (err) {
+        console.error("Error cargando usuarios:", err);
+      }
+    };
+
+    const fetchProjects = async () => {
+      try {
+        const res = await fetch("http://localhost:8000/api/projects/");
+        if (!res.ok) throw new Error(res.statusText);
+        const data = await res.json();
+        setProjects(data.map((p: any) => ({ id: p.id, name: p.name })));
+      } catch (err) {
+        console.error("Error cargando proyectos:", err);
+      }
+    };
+
+    fetchUsers();
+    fetchProjects();
+  }, []);
+
+  const handleChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
@@ -53,7 +95,6 @@ export default function TareaForm({ tarea, onSubmit, onCancel }: TareaFormProps)
           value={formData.description}
           onChange={handleChange}
           className="w-full border rounded p-2"
-          required
         />
       </div>
 
@@ -65,6 +106,7 @@ export default function TareaForm({ tarea, onSubmit, onCancel }: TareaFormProps)
           onChange={handleChange}
           className="w-full border rounded p-2"
         >
+          <option value="Pending">Pending</option>
           <option value="Open">Open</option>
           <option value="In Progress">In Progress</option>
           <option value="Completed">Completed</option>
@@ -86,14 +128,34 @@ export default function TareaForm({ tarea, onSubmit, onCancel }: TareaFormProps)
       </div>
 
       <div className="mb-3">
+        <label className="block mb-1 font-medium">Proyecto</label>
+        <select
+          name="project"
+          value={formData.project}
+          onChange={handleChange}
+          className="w-full border rounded p-2"
+          required
+        >
+          <option value="">Selecciona un proyecto</option>
+          {projects.map((p) => (
+            <option key={p.id} value={p.id}>{p.name}</option>
+          ))}
+        </select>
+      </div>
+
+      <div className="mb-3">
         <label className="block mb-1 font-medium">Asignado a</label>
-        <input
-          type="text"
+        <select
           name="assignee"
           value={formData.assignee}
           onChange={handleChange}
           className="w-full border rounded p-2"
-        />
+        >
+          <option value="">Sin asignar</option>
+          {users.map((u) => (
+            <option key={u.id} value={u.id}>{u.username}</option>
+          ))}
+        </select>
       </div>
 
       <div className="mb-4">

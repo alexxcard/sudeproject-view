@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Card } from "primereact/card";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Button } from "primereact/button";
 import { Dropdown } from "primereact/dropdown";
-import { NewProyecto } from "@/types";
 import { Proyecto } from "@/interface";
+import { NewProyecto } from "@/types";
 import ProyectoForm from "@/components/features/ProyectForm";
 
 export default function ProyectosPage() {
@@ -16,46 +16,41 @@ export default function ProyectosPage() {
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
 
-  // 🔹 Cargar proyectos desde backend
+  // Cargar proyectos desde el backend
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/api/projects/") // cambia al dominio de tu backend
+    fetch("http://127.0.0.1:8000/api/projects/")
       .then((res) => res.json())
       .then((data) => {
-        // Si la API tiene paginación (DRF por defecto), los proyectos vienen en `results`
         if (Array.isArray(data)) {
           setProyectos(data);
-        } else if (data.results && Array.isArray(data.results)) {
+        } else if (data.results) {
           setProyectos(data.results);
-        } else {
-          console.error("Formato inesperado de respuesta:", data);
         }
       })
       .catch((err) => console.error("Error cargando proyectos:", err));
   }, []);
 
-  // 🔹 Guardar nuevo proyecto
+  // Guardar nuevo proyecto
   const addProyecto = async (data: NewProyecto) => {
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/projects/", { // GET o POST
+      const res = await fetch("http://127.0.0.1:8000/api/projects/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
-        credentials: "include", // si usas sesiones con cookies
       });
-      if (!res.ok) throw new Error("Error al crear proyecto");
-      const nuevo = await res.json();
 
-      // Si hay paginación, igual agregamos al array actual
+      if (!res.ok) throw new Error("Error al crear proyecto");
+
+      const nuevo = await res.json();
       setProyectos((prev) => [nuevo, ...prev]);
     } catch (err) {
       console.error(err);
     }
   };
 
-  // 🔹 Filtrado seguro (solo si es array)
-  const filteredProyectos = Array.isArray(proyectos)
-    ? proyectos.filter((p) => !statusFilter || p.status === statusFilter)
-    : [];
+  const filteredProyectos = proyectos.filter(
+    (p) => !statusFilter || p.status === statusFilter
+  );
 
   return (
     <div className="bg-gray-100 min-h-screen p-6">
@@ -74,7 +69,7 @@ export default function ProyectosPage() {
           </div>
         </div>
 
-        {/* 🔹 Filtro por estado */}
+        {/* Filtro por estado */}
         <div className="flex flex-wrap gap-3 mb-4">
           <Dropdown
             value={statusFilter}
@@ -83,13 +78,10 @@ export default function ProyectosPage() {
             placeholder="Filtrar por estado"
             showClear
           />
-          <Button
-            label="Limpiar filtros"
-            onClick={() => setStatusFilter(null)}
-          />
+          <Button label="Limpiar filtros" onClick={() => setStatusFilter(null)} />
         </div>
 
-        {/* 🔹 Tabla de proyectos */}
+        {/* Tabla de proyectos */}
         <DataTable
           value={filteredProyectos}
           paginator
@@ -105,7 +97,7 @@ export default function ProyectosPage() {
         </DataTable>
       </Card>
 
-      {/* 🔹 Modal de formulario */}
+      {/* Modal del formulario */}
       <ProyectoForm
         visible={showForm}
         onHide={() => setShowForm(false)}

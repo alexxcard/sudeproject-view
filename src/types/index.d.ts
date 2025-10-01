@@ -4,13 +4,12 @@ export type ProfileProps = {
 };
 
 export type RowDataPriority = {
-  priority: "Critical" | "High" | "Medium" | "Low";
+  priority: "High" | "Medium" | "Low";
 };
 
 export type RowDataStatus = {
-  status: "Open" | "In Progress" | "Closed";
+  status: "Open" | "Assigned" | "Resolved" | "Closed";
 };
-
 // src/types/index.ts
 import { Incidencia } from "@/interface";
 
