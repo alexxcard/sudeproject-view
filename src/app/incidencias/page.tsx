@@ -38,11 +38,7 @@ const fetchIncidencias = async () => {
       },
     });
 
-   if (!res.ok) {
-  const text = await res.text();
-  console.error("Error al obtener incidencias:", res.status, text);
-  throw new Error(text);
-}
+   
     const data = await res.json();
     setIncidencias(
       data.map((i: any) => ({
@@ -67,63 +63,80 @@ const fetchIncidencias = async () => {
 }, []);
 
   // -------------------- Eliminar incidencia --------------------
-  const deleteIncidencia = async (id: string) => {
-    try {
-      const res = await fetch(`${API_URL}${id}/`, {
-        method: "DELETE",
-        headers: {
-          "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
-        },
-      });
-      if (!res.ok) throw new Error(res.statusText);
-      setIncidencias((prev) => prev.filter((i) => i.id !== id));
-    } catch (err) {
-      console.error("Error eliminando incidencia:", err);
+const deleteIncidencia = async (id: string) => {
+  try {
+    const session = await getSession();
+    if (!session) {
+      console.error("No hay sesión activa");
+      return;
     }
-  };
+
+    const res = await fetch(`${API_URL}${id}/`, {
+      method: "DELETE",
+      headers: {
+        "Authorization": `Bearer ${session.user.access}`, // 👈 usar el mismo token
+      },
+    });
+
+    if (!res.ok) throw new Error(res.statusText);
+    setIncidencias((prev) => prev.filter((i) => i.id !== id));
+  } catch (err) {
+    console.error("Error eliminando incidencia:", err);
+  }
+};
 
   // -------------------- Crear nueva incidencia --------------------
-  const addIncidencia = async (data: NewIncidencia) => {
-    try {
-      const res = await fetch(API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
-        },
-        body: JSON.stringify({
-          title: data.title,
-          description: data.description,
-          status: data.status,
-          priority: data.priority,
-          project: data.project_id,
-          reporter: data.reporter_id,
-          assignee: data.assignee_id || null,
-        }),
-      });
-
-      if (!res.ok) throw new Error(res.statusText);
-      const newIncident = await res.json();
-
-      setIncidencias((prev) => [
-        {
-          id: newIncident.id,
-          title: newIncident.title,
-          description: newIncident.description,
-          status: newIncident.status as RowDataStatus["status"],
-          priority: newIncident.priority as RowDataPriority["priority"],
-          project: newIncident.project.name,
-          reporter: newIncident.reporter.username,
-          assignee: newIncident.assignee?.username || "",
-          created_at: newIncident.created_at.split("T")[0],
-          updated_at: newIncident.updated_at.split("T")[0],
-        },
-        ...prev,
-      ]);
-    } catch (err) {
-      console.error("Error creando incidencia:", err);
+ const addIncidencia = async (data: NewIncidencia) => {
+  try {
+    const session = await getSession();
+    if (!session) {
+      console.error("No hay sesión activa");
+      return;
     }
-  };
+
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${session.user.access}`,
+      },
+      body: JSON.stringify({
+        title: data.title,
+        description: data.description,
+        status: data.status,
+        priority: data.priority,
+        project: data.project,   // 👈 usar project
+        reporter: data.reporter, // 👈 usar reporter
+        assignee: data.assignee || null,
+      }),
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(errorText);
+    }
+
+    const newIncident = await res.json();
+
+    setIncidencias((prev) => [
+      {
+        id: newIncident.id,
+        title: newIncident.title,
+        description: newIncident.description,
+        status: newIncident.status as RowDataStatus["status"],
+        priority: newIncident.priority as RowDataPriority["priority"],
+        project: newIncident.project.name,
+        reporter: newIncident.reporter.username,
+        assignee: newIncident.assignee?.username || "",
+        created_at: newIncident.created_at.split("T")[0],
+        updated_at: newIncident.updated_at.split("T")[0],
+      },
+      ...prev,
+    ]);
+  } catch (err) {
+    console.error("Error creando incidencia:", err);
+  }
+};
 
   // -------------------- Filtrado --------------------
   const filteredIncidencias = incidencias.filter(

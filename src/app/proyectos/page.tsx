@@ -69,6 +69,7 @@ export default function ProyectosPage() {
     setProyectosConNombres(mapProyectos);
   }, [usuarios, proyectos]);
 
+  // Agregar proyecto
   const addProyecto = async (data: NewProyecto) => {
     try {
       const res = await fetch("http://127.0.0.1:8000/api/projects/", {
@@ -81,6 +82,24 @@ export default function ProyectosPage() {
       setProyectos(prev => [nuevo, ...prev]);
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  // Eliminar proyecto
+  const deleteProyecto = async (id: string) => {
+    if (!confirm("¿Estás seguro de que deseas eliminar este proyecto?")) return;
+
+    try {
+      const res = await fetch(`http://127.0.0.1:8000/api/projects/${id}/`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Error al eliminar proyecto");
+
+      setProyectos(prev => prev.filter(p => p.id !== id));
+      setProyectosConNombres(prev => prev.filter(p => p.id !== id));
+    } catch (err) {
+      console.error(err);
+      alert("No se pudo eliminar el proyecto.");
     }
   };
 
@@ -133,6 +152,15 @@ export default function ProyectosPage() {
           <Column header="Propietario" body={(row) => row.ownerName} />
           <Column header="Miembros" body={(row) => row.membersNames} />
           <Column field="created_at" header="Creado" />
+          <Column header="Accion" body={(row) => (
+              <Button
+                label=""
+                icon="pi pi-trash"
+                className="p-button-danger p-button-sm"
+                onClick={() => deleteProyecto(row.id)}
+              />
+            )}
+          />
         </DataTable>
       </Card>
 

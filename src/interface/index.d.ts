@@ -30,39 +30,31 @@ export interface NewIncidencia {
 
 
 
+
 // src/interface/proyecto.ts
 export interface Proyecto {
   id: string;
   name: string;
   description: string;
   created_at: string;
-  owner: string;         // id del propietario
-  members: string[];     // array de ids de miembros
+  owner: string;         
+  members: string[];     
   status?: string;
 }
 
 
 
-export interface Usuario {
-  id: string;
-  nombre: string;
-  correo: string;
-  rol: string;
-  estado: string;
-  created_at: string;
-  updated_at: string;
-}
-
-interface TareaBackend {
+export interface TareaBackend {
   id: string;
   title: string;
-  description?: string;
+  description: string;
   status: "Pending" | "InProgress" | "InReview" | "Done";
-  priority: "Low" | "Medium" | "High";
-  project?: { name: string } | null;
-  assignee?: { username: string } | null;
-  due_date?: string | null;
-  created_at: string;
+  priority: "High" | "Medium" | "Low";
+  project: { name: string };                       
+  assignee: { username: string } | null;           
+  sprint: { name: string } | null;                 
+  parent: { title: string } | null;                
+  dependencies: { title: string }[];     
+  created_at: string;         
   updated_at: string;
 }
-

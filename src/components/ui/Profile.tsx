@@ -23,7 +23,7 @@ export default function Profile({ session, name }: ProfileProps) {
       });
 
       setTimeout(() => {
-        router.push("/notAuth"); // redirige a tu página pública
+        router.push("/login"); // redirige a tu página pública
       }, 1000);
     } catch (error) {
       console.error(error);

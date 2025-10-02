@@ -1,4 +1,5 @@
 import NextAuth, { DefaultSession, DefaultUser } from "next-auth";
+import { Session } from "next-auth"; 
 
 declare module "next-auth" {
   interface Session {
@@ -21,4 +22,9 @@ declare module "next-auth/jwt" {
     refresh: string;
     accessTokenExpires: number;
   }
+}
+
+export interface ProfileProps {
+  session: Session | null; // 👈 aquí debe ser Session | null
+  name?: string;
 }

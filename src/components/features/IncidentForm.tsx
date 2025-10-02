@@ -6,9 +6,17 @@ import { InputText } from "primereact/inputtext";
 import { InputTextarea } from "primereact/inputtextarea";
 import { Dropdown } from "primereact/dropdown";
 import { Button } from "primereact/button";
-import { NewIncidencia } from "@/interface";
 
-// Interfaces para dropdown
+export interface IncidentFormData {
+  title: string;
+  description: string;
+  status: "Open" | "Assigned" | "Resolved" | "Closed";
+  priority: "Low" | "Medium" | "High";
+  project: string; // id del proyecto
+  reporter: string; // id del usuario reportero
+  assignee?: string | null; // id del usuario asignado
+}
+
 interface UsuarioOption {
   id: string;
   nombre: string;
@@ -19,31 +27,31 @@ interface ProyectoOption {
   name: string;
 }
 
-export interface IncidenFormProps {
+interface IncidentFormProps {
   visible: boolean;
   onHide: () => void;
-  onSave: (data: NewIncidencia) => void;
+  onSave: (data: IncidentFormData) => void;
 }
 
-export default function IncidenForm({ visible, onHide, onSave }: IncidenFormProps) {
-  const [form, setForm] = useState<NewIncidencia>({
+export default function IncidentForm({ visible, onHide, onSave }: IncidentFormProps) {
+  const [form, setForm] = useState<IncidentFormData>({
     title: "",
     description: "",
     status: "Open",
     priority: "Low",
-    project_id: "",
-    reporter_id: "",
-    assignee_id: null,
+    project: "",
+    reporter: "",
+    assignee: null,
   });
 
   const [proyectos, setProyectos] = useState<ProyectoOption[]>([]);
   const [usuarios, setUsuarios] = useState<UsuarioOption[]>([]);
 
-  // 🔹 Cargar proyectos y usuarios desde backend
+  // 🔹 Cargar proyectos y usuarios
   useEffect(() => {
     const fetchProyectos = async () => {
       try {
-        const res = await fetch("http://localhost:8000/projects/");
+        const res = await fetch("http://localhost:8000/api/projects/");
         const data = await res.json();
         setProyectos(data.map((p: any) => ({ id: p.id, name: p.name })));
       } catch (err) {
@@ -53,9 +61,9 @@ export default function IncidenForm({ visible, onHide, onSave }: IncidenFormProp
 
     const fetchUsuarios = async () => {
       try {
-        const res = await fetch("http://localhost:8000/users/");
+        const res = await fetch("http://localhost:8000/api/users/");
         const data = await res.json();
-        setUsuarios(data.map((u: any) => ({ id: u.id, nombre: u.nombre })));
+        setUsuarios(data.map((u: any) => ({ id: u.id, nombre: u.username })));
       } catch (err) {
         console.error("Error fetching usuarios:", err);
       }
@@ -66,7 +74,7 @@ export default function IncidenForm({ visible, onHide, onSave }: IncidenFormProp
   }, []);
 
   const handleSave = () => {
-    if (!form.title || !form.project_id || !form.reporter_id) {
+    if (!form.title || !form.project || !form.reporter) {
       alert("Título, proyecto y reportero son obligatorios");
       return;
     }
@@ -78,22 +86,16 @@ export default function IncidenForm({ visible, onHide, onSave }: IncidenFormProp
       description: "",
       status: "Open",
       priority: "Low",
-      project_id: "",
-      reporter_id: "",
-      assignee_id: null,
+      project: "",
+      reporter: "",
+      assignee: null,
     });
 
     onHide();
   };
 
   return (
-    <Dialog
-      header="Nueva Incidencia"
-      visible={visible}
-      style={{ width: "600px" }}
-      modal
-      onHide={onHide}
-    >
+    <Dialog header="Nueva Incidencia" visible={visible} style={{ width: "600px" }} modal onHide={onHide}>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <InputText
           placeholder="Título"
@@ -102,26 +104,29 @@ export default function IncidenForm({ visible, onHide, onSave }: IncidenFormProp
         />
 
         <Dropdown
-          value={form.project_id}
+          value={form.project}
           options={proyectos}
-          onChange={(e) => setForm({ ...form, project_id: e.value })}
+          onChange={(e) => setForm({ ...form, project: e.value })}
           optionLabel="name"
+          optionValue="id"   // 👈 Esto asegura que solo se guarde el id
           placeholder="Selecciona un proyecto"
         />
 
         <Dropdown
-          value={form.reporter_id}
+          value={form.reporter}
           options={usuarios}
-          onChange={(e) => setForm({ ...form, reporter_id: e.value })}
+          onChange={(e) => setForm({ ...form, reporter: e.value })}
           optionLabel="nombre"
-          placeholder="Selecciona reportero"
+          optionValue="id"   // 👈 Igual aquí, solo se guarda el id del usuario
+          placeholder="Selecciona miembro"
         />
 
         <Dropdown
-          value={form.assignee_id}
+          value={form.assignee}
           options={usuarios}
-          onChange={(e) => setForm({ ...form, assignee_id: e.value })}
+          onChange={(e) => setForm({ ...form, assignee: e.value })}
           optionLabel="nombre"
+          optionValue="id"   // 👈 también para el asignado
           placeholder="Asignar a (opcional)"
           showClear
         />
@@ -135,7 +140,7 @@ export default function IncidenForm({ visible, onHide, onSave }: IncidenFormProp
 
         <Dropdown
           value={form.priority}
-          options={["High", "Medium", "Low"]}
+          options={["Low", "Medium", "High"]}
           onChange={(e) => setForm({ ...form, priority: e.value })}
           placeholder="Prioridad"
         />
