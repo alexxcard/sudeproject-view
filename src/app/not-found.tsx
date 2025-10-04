@@ -17,8 +17,7 @@ export default function NotFound() {
         backgroundColor: "#f9fafb",
       }}
     >
-      <Card
-        style={{
+      <Card   style={{
           textAlign: "center",
           padding: "32px",
           maxWidth: "800px",

@@ -152,7 +152,10 @@ export default function ProyectosPage() {
           <Column header="Propietario" body={(row) => row.ownerName} />
           <Column header="Miembros" body={(row) => row.membersNames} />
           <Column field="created_at" header="Creado" />
-          <Column header="Accion" body={(row) => (
+          {/* Columna de acciones */}
+          <Column
+            header="Accion"
+            body={(row) => (
               <Button
                 label=""
                 icon="pi pi-trash"

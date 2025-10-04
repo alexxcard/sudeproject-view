@@ -11,7 +11,6 @@ import { Button } from "primereact/button";
 import IncidenForm from "@/components/features/IncidentForm";
 import { NewIncidencia, RowDataPriority, RowDataStatus } from "@/types";
 import { getSession } from "next-auth/react";
-import { getIncidents } from "@/app/services/api";
 
 const API_URL = "http://localhost:8000/api/incidents/";
 
@@ -21,122 +20,109 @@ export default function IncidenciasPage() {
   const [priorityFilter, setPriorityFilter] = useState<"High" | "Medium" | "Low" | null>(null);
   const [showForm, setShowForm] = useState(false);
 
-  // -------------------- Obtener incidencias --------------------
-useEffect(() => {
-const fetchIncidencias = async () => {
-  const session = await getSession();
-  if (!session) {
-    console.error("No hay sesión activa");
-    return;
-  }
+  useEffect(() => {
+    const fetchIncidencias = async () => {
+      const session = await getSession();
+      if (!session) return;
 
-  try {
-    const res = await fetch("http://localhost:8000/api/incidents/", {
-      headers: {
-        "Authorization": `Bearer ${session.user.access}`,
-        "Content-Type": "application/json",
-      },
-    });
+      try {
+        const res = await fetch(API_URL, {
+          headers: {
+            "Authorization": `Bearer ${session.user.access}`,
+            "Content-Type": "application/json",
+          },
+        });
 
-   
-    const data = await res.json();
-    setIncidencias(
-      data.map((i: any) => ({
-        id: i.id,
-        title: i.title,
-        description: i.description,
-        status: i.status,
-        priority: i.priority,
-        project: i.project.name,
-        reporter: i.reporter.username,
-        assignee: i.assignee?.username || "",
-        created_at: i.created_at.split("T")[0],
-        updated_at: i.updated_at.split("T")[0],
-      }))
-    );
-  } catch (err) {
-    console.error(err);
-  }
-};
+        const data = await res.json();
+        setIncidencias(
+          data.map((i: any) => ({
+            id: i.id,
+            title: i.title,
+            description: i.description,
+            status: i.status,
+            priority: i.priority,
+            project: typeof i.project === "string" ? i.project : i.project?.name || "Desconocido",
+            reporter: typeof i.reporter === "string" ? i.reporter : i.reporter?.username || "Desconocido",
+            assignee: typeof i.assignee === "string" ? i.assignee : i.assignee?.username || "Sin asignar",
+            created_at: i.created_at.split("T")[0],
+            updated_at: i.updated_at.split("T")[0],
+          }))
+        );
+      } catch (err) {
+        console.error(err);
+      }
+    };
 
-  fetchIncidencias();
-}, []);
+    fetchIncidencias();
+  }, []);
 
-  // -------------------- Eliminar incidencia --------------------
-const deleteIncidencia = async (id: string) => {
-  try {
-    const session = await getSession();
-    if (!session) {
-      console.error("No hay sesión activa");
-      return;
+  const deleteIncidencia = async (id: string) => {
+    try {
+      const session = await getSession();
+      if (!session) return;
+
+      const res = await fetch(`${API_URL}${id}/`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${session.user.access}`,
+        },
+      });
+
+      if (!res.ok) throw new Error(res.statusText);
+      setIncidencias((prev) => prev.filter((i) => i.id !== id));
+    } catch (err) {
+      console.error("Error eliminando incidencia:", err);
     }
+  };
 
-    const res = await fetch(`${API_URL}${id}/`, {
-      method: "DELETE",
-      headers: {
-        "Authorization": `Bearer ${session.user.access}`, // 👈 usar el mismo token
-      },
-    });
+  const addIncidencia = async (data: NewIncidencia) => {
+    try {
+      const session = await getSession();
+      if (!session) return;
 
-    if (!res.ok) throw new Error(res.statusText);
-    setIncidencias((prev) => prev.filter((i) => i.id !== id));
-  } catch (err) {
-    console.error("Error eliminando incidencia:", err);
-  }
-};
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.user.access}`,
+        },
+        body: JSON.stringify({
+          title: data.title,
+          description: data.description,
+          status: data.status,
+          priority: data.priority,
+          project: data.project,
+          reporter: data.reporter,
+          assignee: data.assignee || null,
+        }),
+      });
 
-  // -------------------- Crear nueva incidencia --------------------
- const addIncidencia = async (data: NewIncidencia) => {
-  try {
-    const session = await getSession();
-    if (!session) {
-      console.error("No hay sesión activa");
-      return;
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText);
+      }
+
+      const newIncident = await res.json();
+
+      setIncidencias((prev) => [
+        {
+          id: newIncident.id,
+          title: newIncident.title,
+          description: newIncident.description,
+          status: newIncident.status as RowDataStatus["status"],
+          priority: newIncident.priority as RowDataPriority["priority"],
+          project: typeof newIncident.project === "string" ? newIncident.project : newIncident.project?.name || "Desconocido",
+          reporter: typeof newIncident.reporter === "string" ? newIncident.reporter : newIncident.reporter?.username || "Desconocido",
+          assignee: typeof newIncident.assignee === "string" ? newIncident.assignee : newIncident.assignee?.username || "Sin asignar",
+          created_at: newIncident.created_at.split("T")[0],
+          updated_at: newIncident.updated_at.split("T")[0],
+        },
+        ...prev,
+      ]);
+    } catch (err) {
+      console.error("Error creando incidencia:", err);
     }
-
-    const res = await fetch(API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${session.user.access}`,
-      },
-      body: JSON.stringify({
-        title: data.title,
-        description: data.description,
-        status: data.status,
-        priority: data.priority,
-        project: data.project,   // 👈 usar project
-        reporter: data.reporter, // 👈 usar reporter
-        assignee: data.assignee || null,
-      }),
-    });
-
-    if (!res.ok) {
-      const errorText = await res.text();
-      throw new Error(errorText);
-    }
-
-    const newIncident = await res.json();
-
-    setIncidencias((prev) => [
-      {
-        id: newIncident.id,
-        title: newIncident.title,
-        description: newIncident.description,
-        status: newIncident.status as RowDataStatus["status"],
-        priority: newIncident.priority as RowDataPriority["priority"],
-        project: newIncident.project.name,
-        reporter: newIncident.reporter.username,
-        assignee: newIncident.assignee?.username || "",
-        created_at: newIncident.created_at.split("T")[0],
-        updated_at: newIncident.updated_at.split("T")[0],
-      },
-      ...prev,
-    ]);
-  } catch (err) {
-    console.error("Error creando incidencia:", err);
-  }
-};
+  };
 
   // -------------------- Filtrado --------------------
   const filteredIncidencias = incidencias.filter(

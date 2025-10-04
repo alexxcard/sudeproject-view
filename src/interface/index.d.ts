@@ -41,6 +41,13 @@ export interface Proyecto {
   members: string[];     
   status?: string;
 }
+interface ProyectoConNombres extends Proyecto {
+  ownerName: string;
+  membersNames: string;
+  reporterName: string;
+  assigneeName: string;
+}
+
 
 
 
@@ -57,4 +64,13 @@ export interface TareaBackend {
   dependencies: { title: string }[];     
   created_at: string;         
   updated_at: string;
+}
+
+export interface Usuario {
+  id: string;
+  nombre: string;
+  apellido: string;
+  correo: string;
+  role: string;
+  estado: "Activo" | "Inactivo";
 }

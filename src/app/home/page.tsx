@@ -7,9 +7,10 @@ import { Tag } from "primereact/tag";
 import { PiFolderBold, PiCheckCircleBold } from "react-icons/pi";
 import { useRouter } from "next/navigation";
 import {
-  PieChart,
-  Pie,
-  Cell,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
   Tooltip,
   Legend,
   ResponsiveContainer,
@@ -30,7 +31,6 @@ interface Stats {
 export default function Dashboard() {
   const router = useRouter();
   const primaryColor = "#48595B";
-  const COLORS = ["#0088FE", "#FF8042"];
 
   const [stats, setStats] = useState<Stats>({ incidencias: 0, proyectos: 0, tareas: 0 });
   const [dataIncidencias, setDataIncidencias] = useState<ChartDataInput[]>([
@@ -172,26 +172,24 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Gráficos */}
+      {/* Gráficos de barras */}
       <div style={{ display: "flex", gap: "24px", flexWrap: "wrap" }}>
         {[
           { title: "Incidencias", data: dataIncidencias },
           { title: "Proyectos", data: dataProyectos },
           { title: "Tareas", data: dataTareas },
         ].map((chart) => (
-          <Card key={chart.title} style={{ flex: "1 1 250px", minWidth: "250px" }}>
+          <Card key={chart.title} style={{ flex: "1 1 300px", minWidth: "300px" }}>
             <h3>{chart.title}</h3>
-            <div style={{ width: "100%", height: 200 }}>
+            <div style={{ width: "100%", height: 250 }}>
               <ResponsiveContainer>
-                <PieChart>
-                  <Pie data={chart.data} dataKey="value" nameKey="name" outerRadius={70} label>
-                    {chart.data.map((entry, index) => (
-                      <Cell key={index} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
+                <BarChart data={chart.data} margin={{ top: 20, right: 20, left: 0, bottom: 20 }}>
+                  <XAxis dataKey="name" />
+                  <YAxis />
                   <Tooltip />
                   <Legend />
-                </PieChart>
+                  <Bar dataKey="value" fill="#3b82f6" />
+                </BarChart>
               </ResponsiveContainer>
             </div>
           </Card>

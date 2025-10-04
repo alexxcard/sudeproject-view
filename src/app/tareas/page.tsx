@@ -7,88 +7,125 @@ import { Column } from "primereact/column";
 import { Button } from "primereact/button";
 import { Tag } from "primereact/tag";
 import { Dialog } from "primereact/dialog";
-import { TareaBackend } from "@/interface"; 
 import TareaForm from "@/components/features/TareasForm";
-import { IncidentFormData } from "@/components/features/IncidentForm";
 
 const API_URL = "http://localhost:8000/api/tasks/";
 
+const getAuthHeaders = (): Record<string, string> => {
+  const token = localStorage.getItem("access_token");
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  return headers;
+};
+
+interface User {
+  id: string;
+  username: string;
+}
+
+interface Project {
+  id: string;
+  name: string;
+}
+
+interface Sprint {
+  id: string;
+  name: string;
+}
+
+interface Task {
+  id: string;
+  title: string;
+  description?: string;
+  status: "Pending" | "InProgress" | "InReview" | "Done";
+  priority: "Low" | "Medium" | "High";
+  project: Project | null;
+  assignee: User | null;
+  sprint: Sprint | null;
+  parent: { id: string; title: string } | null;
+  dependencies: { id: string; title: string }[];
+  created_at: string;
+  updated_at: string;
+}
+
+// Tipado del formulario (solo IDs)
+interface TaskFormData {
+  title: string;
+  description: string;
+  status: "Pending" | "InProgress" | "InReview" | "Done";
+  priority: "Low" | "Medium" | "High";
+  project: string; // ID
+  assignee: string; // ID
+  sprint: string; // ID
+  parent: string; // ID
+  due_date: string;
+}
+
 export default function TareasPage() {
-  const [tareas, setTareas] = useState<TareaBackend[]>([]);
+  const [tareas, setTareas] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
 
-  // 🔹 Cargar tareas desde backend con cookies
+  // 🔹 Cargar tareas
   useEffect(() => {
     const fetchTareas = async () => {
       try {
-        const res = await fetch(API_URL, {
-          method: "GET",
-          credentials: "include", // 👈 ENVÍA cookies de sesión
-        });
-
-        if (!res.ok) throw new Error(res.statusText);
-
-        const data: TareaBackend[] = await res.json();
-
-        const mapped: TareaBackend[] = data.map((t) => ({
-          id: t.id,
-          title: t.title,
-          description: t.description || "",
-          status: t.status,
-          priority: t.priority,
-          project: t.project ? { name: t.project.name } : { name: "Sin proyecto" },
-          assignee: t.assignee ? { username: t.assignee.username } : { username: "Sin asignar" },
-          sprint: t.sprint ? { name: t.sprint.name } : { name: "Sin sprint" },
-          parent: t.parent ? { title: t.parent.title } : null,
-          dependencies: t.dependencies || [],
-          created_at: t.created_at,
-          updated_at: t.updated_at,
-        }));
-
-        setTareas(mapped);
+        const res = await fetch(API_URL, { headers: getAuthHeaders() });
+        if (!res.ok) throw new Error(`Error ${res.status}`);
+        const data: Task[] = await res.json();
+        setTareas(data);
       } catch (err) {
         console.error("Error cargando tareas:", err);
       } finally {
         setLoading(false);
       }
     };
-
     fetchTareas();
   }, []);
 
-  // 🔹 Crear nueva tarea
-  const addTarea = async (nuevaTarea: TareaBackend) => {
-    try {
-      const res = await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include", // 👈 cookies
-        body: JSON.stringify({ username: "tu_usuario", password: "tu_password" }),
-      });
+  // 🔹 Crear tarea (mapear IDs a objetos)
+// 🔹 Crear tarea (mandar IDs planos en vez de objetos)
+const addTarea = async (formData: TaskFormData) => {
+  try {
+    const payload = {
+      title: formData.title,
+      description: formData.description,
+      status: formData.status,
+      priority: formData.priority,
+      project_id: formData.project || null,
+      assignee_id: formData.assignee || null,
+      sprint_id: formData.sprint || null,
+      parent_id: formData.parent || null,
+      due_date: formData.due_date || null,
+    };
 
-      if (!res.ok) {
-        const text = await res.text();
-        console.error("Error al crear tarea:", text);
-        return;
-      }
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify(payload),
+    });
 
-      const tareaCreada: TareaBackend = await res.json();
-      setTareas([tareaCreada, ...tareas]);
-      setShowForm(false);
-    } catch (err) {
-      console.error("Error al crear tarea:", err);
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(text);
     }
-  };
+
+    const tareaCreada: Task = await res.json();
+    setTareas([tareaCreada, ...tareas]);
+    setShowForm(false);
+  } catch (err) {
+    console.error("Error al crear tarea:", err);
+  }
+};
+
 
   // 🔹 Eliminar tarea
   const deleteTarea = async (id: string) => {
     try {
       const res = await fetch(`${API_URL}${id}/`, {
         method: "DELETE",
-        credentials: "include", // 👈 cookies
+        headers: getAuthHeaders(),
       });
-
       if (res.ok) {
         setTareas(tareas.filter((t) => t.id !== id));
       } else {
@@ -99,60 +136,22 @@ export default function TareasPage() {
       console.error("Error al eliminar tarea:", err);
     }
   };
-  
-  const addIncidencia = async (incidencia: IncidentFormData) => {
-  try {
-    const token = localStorage.getItem("access_token"); // o donde guardes tu JWT
-    const res = await fetch("http://localhost:8000/api/incidents/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`, // 🔹 token JWT
-      },
-      body: JSON.stringify(incidencia),
-    });
 
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(text);
-    }
+  // 🔹 Renderizar estado con colores
+  const statusTemplate = (row: Task) => {
+    const map = {
+      Pending: { label: "Pendiente", severity: "info" },
+      InProgress: { label: "En progreso", severity: "warning" },
+      InReview: { label: "En revisión", severity: "secondary" },
+      Done: { label: "Completada", severity: "success" },
+    } as const;
 
-    const nueva = await res.json();
-    // Aquí actualizas tu lista o estado
-    return nueva;
-  } catch (err) {
-    console.error("Error creando incidencia:", err);
-  }
-};
+    const { label, severity } = map[row.status] || {
+      label: row.status,
+      severity: "contrast",
+    };
 
-  // 🔹 Render Estado con colores
-  const statusTemplate = (rowData: TareaBackend) => {
-    let severity: "info" | "warning" | "success" | "danger" | "secondary" | "contrast" = "info";
-    let displayStatus = "";
-
-    switch (rowData.status) {
-      case "Pending":
-        severity = "info";
-        displayStatus = "Pendiente";
-        break;
-      case "InProgress":
-        severity = "warning";
-        displayStatus = "En progreso";
-        break;
-      case "InReview":
-        severity = "secondary";
-        displayStatus = "En revisión";
-        break;
-      case "Done":
-        severity = "success";
-        displayStatus = "Completada";
-        break;
-      default:
-        severity = "info";
-        displayStatus = rowData.status;
-    }
-
-    return <Tag value={displayStatus} severity={severity} />;
+    return <Tag value={label} severity={severity} />;
   };
 
   return (
@@ -181,19 +180,39 @@ export default function TareasPage() {
             <Column field="description" header="Descripción" />
             <Column header="Estado" body={statusTemplate} />
             <Column field="priority" header="Prioridad" />
-            <Column field="project.name" header="Proyecto" />
-            <Column field="assignee.username" header="Asignado a" />
-            <Column field="sprint.name" header="Sprint" />
+            <Column
+              header="Proyecto"
+              body={(row: Task) => row.project?.name || "Sin proyecto"}
+            />
+            <Column
+              header="Asignado a"
+              body={(row: Task) => row.assignee?.username || "Sin asignar"}
+            />
+            <Column
+              header="Sprint"
+              body={(row: Task) => row.sprint?.name || "Sin sprint"}
+            />
+            <Column
+              header="Padre"
+              body={(row: Task) => row.parent?.title || "Sin padre"}
+            />
+            <Column
+              header="Dependencias"
+              body={(row: Task) =>
+                row.dependencies.length > 0
+                  ? row.dependencies.map((d) => d.title).join(", ")
+                  : "Sin dependencias"
+              }
+            />
             <Column field="created_at" header="Creación" />
             <Column field="updated_at" header="Actualización" />
-
             <Column
               header="Acciones"
-              body={(rowData: TareaBackend) => (
+              body={(row: Task) => (
                 <Button
                   icon="pi pi-trash"
                   className="p-button-danger p-button-sm"
-                  onClick={() => deleteTarea(rowData.id)}
+                  onClick={() => deleteTarea(row.id)}
                 />
               )}
             />
@@ -201,13 +220,13 @@ export default function TareasPage() {
         )}
       </Card>
 
+      {/* Modal de creación */}
       <Dialog
         header="Nueva Tarea"
         visible={showForm}
         style={{ width: "600px" }}
         modal
         onHide={() => setShowForm(false)}
-        className="p-fluid"
       >
         <TareaForm onSubmit={addTarea} onCancel={() => setShowForm(false)} />
       </Dialog>
